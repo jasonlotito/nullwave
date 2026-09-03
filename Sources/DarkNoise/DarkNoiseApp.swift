@@ -246,6 +246,14 @@ private final class CommandLineToolInstaller: ObservableObject {
             return
         }
 
+        let explanation = NSAlert()
+        explanation.alertStyle = .informational
+        explanation.messageText = "Install nullwavectl?"
+        explanation.informativeText = "Nullwave will create a symlink at /usr/local/bin/nullwavectl so you can control the running app from Terminal. Because /usr/local/bin is system-owned, macOS will ask for an administrator password. No app data or system settings will be changed."
+        explanation.addButton(withTitle: "Install")
+        explanation.addButton(withTitle: "Cancel")
+        guard explanation.runModal() == .alertFirstButtonReturn else { return }
+
         let command = [
             "/bin/mkdir -p \(shellQuoted("/usr/local/bin"))",
             "/bin/ln -sfn \(shellQuoted(bundledToolURL.path)) \(shellQuoted(destinationPath))"
