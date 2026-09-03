@@ -43,7 +43,7 @@ if [ "$VERSION" != "$CURRENT_VERSION" ]; then
     plutil -replace CFBundleShortVersionString -string "$VERSION" Resources/Info.plist
     plutil -replace CFBundleVersion -string "$((CURRENT_BUILD + 1))" Resources/Info.plist
 
-    perl -pi -e "s#downloads/Nullwave-[0-9]+(?:\\.[0-9]+)+\\.zip#downloads/Nullwave-$VERSION.zip#g; s#/releases/tag/v[0-9]+(?:\\.[0-9]+)+#/releases/tag/v$VERSION#g; s/Version [0-9]+(?:\\.[0-9]+)+/Version $VERSION/g; s/Download Nullwave [0-9]+(?:\\.[0-9]+)+/Download Nullwave $VERSION/g" docs/index.html
+    perl -pi -e "s#downloads/Nullwave-[0-9]+(?:\\.[0-9]+)+\\.zip#downloads/Nullwave-$VERSION.zip#g; s#/releases/tag/v[0-9]+(?:\\.[0-9]+)+#/releases/tag/v$VERSION#g; s/Version [0-9]+(?:\\.[0-9]+)+/Version $VERSION/g; s/Download Nullwave [0-9]+(?:\\.[0-9]+)+/Download Nullwave $VERSION/g; s/\"softwareVersion\": \"[0-9]+(?:\\.[0-9]+)+\"/\"softwareVersion\": \"$VERSION\"/g" docs/index.html
 fi
 
 make test

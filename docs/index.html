@@ -4,15 +4,72 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#060714">
-  <meta name="description" content="Nullwave is a native macOS menu-bar noise player with 11 generated sounds, independent per-sound volume, quick favorites, and smart headset call-mode detection.">
-  <meta property="og:title" content="Nullwave — Find your quiet">
-  <meta property="og:description" content="A tiny native noise player that lives in your Mac menu bar.">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Nullwave is a free, private macOS menu-bar noise generator with 11 sounds, per-sound volume, favorites, call-mode pausing, and no ads or tracking.">
+  <meta name="author" content="Jason Lotito">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://nullwaveapp.com/">
+
+  <meta property="og:site_name" content="Nullwave">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="Nullwave — Free Noise Generator for macOS">
+  <meta property="og:description" content="Eleven generated sounds in your Mac menu bar, with independent volume, quick favorites, and smart call-mode pausing. Free, private, and ad-free.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://nullwaveapp.com/">
   <meta property="og:image" content="https://nullwaveapp.com/assets/nullwave-icon.png">
-  <title>Nullwave — Native noise for macOS</title>
-  <link rel="icon" href="assets/nullwave-icon.png">
+  <meta property="og:image:secure_url" content="https://nullwaveapp.com/assets/nullwave-icon.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="Nullwave app icon with glowing violet and blue waves">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Nullwave — Free Noise Generator for macOS">
+  <meta name="twitter:description" content="Eleven generated sounds in your Mac menu bar. Free, private, and ad-free.">
+  <meta name="twitter:image" content="https://nullwaveapp.com/assets/nullwave-icon.png">
+  <meta name="twitter:image:alt" content="Nullwave app icon with glowing violet and blue waves">
+
+  <title>Nullwave — Free Noise Generator for the macOS Menu Bar</title>
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/nullwave-icon.png">
+  <link rel="apple-touch-icon" href="assets/nullwave-icon.png">
+  <link rel="alternate" type="application/rss+xml" title="Nullwave Updates" href="https://nullwaveapp.com/appcast.xml">
   <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Nullwave",
+    "url": "https://nullwaveapp.com/",
+    "description": "A free, private macOS menu-bar noise generator with 11 generated sounds, independent per-sound volume, quick favorites, previews, and optional headset call-mode pausing.",
+    "applicationCategory": "UtilitiesApplication",
+    "applicationSubCategory": "Productivity",
+    "operatingSystem": "macOS 14 or later",
+    "softwareVersion": "1.0.2",
+    "downloadUrl": "https://nullwaveapp.com/downloads/Nullwave-1.0.2.zip",
+    "image": "https://nullwaveapp.com/assets/nullwave-icon.png",
+    "screenshot": "https://nullwaveapp.com/assets/nullwave-about-dark.png",
+    "author": {
+      "@type": "Person",
+      "name": "Jason Lotito",
+      "url": "https://github.com/jasonlotito"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "11 generated noise and ambient sounds",
+      "Independent saved volume for every sound",
+      "Three customizable menu-bar favorites",
+      "Non-disruptive sound previews",
+      "Optional headset call-mode pausing",
+      "Command-line control",
+      "Automatic signed updates",
+      "No account, tracking, ads, or cost"
+    ]
+  }
+  </script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -37,7 +94,7 @@
       <div class="hero-copy">
         <div class="eyebrow"><span class="status-dot"></span> Native to your menu bar</div>
         <h1>Find your <span>quiet.</span></h1>
-        <p class="lede">Eleven shades of sound, generated locally on your Mac. One click to play. One click to stop. Nothing between you and focus.</p>
+        <p class="lede">Nullwave is a free macOS menu-bar noise generator with eleven shades of sound, created locally on your Mac. One click to play. One click to stop. Nothing between you and focus.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="downloads/Nullwave-1.0.2.zip">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"/></svg>
@@ -49,7 +106,7 @@
         <p class="privacy-line"><span>No account</span><span>No tracking</span><span>No ads</span><span>No cost</span></p>
       </div>
 
-      <div class="hero-visual" aria-label="Nullwave quick controls illustration">
+      <div class="hero-visual" role="group" aria-label="Nullwave quick controls in the macOS menu bar">
         <div class="orbit orbit-one"></div>
         <div class="orbit orbit-two"></div>
         <svg class="wave-field" viewBox="0 0 780 420" aria-hidden="true">
@@ -146,7 +203,7 @@
             <h3>Controllable from the command line</h3>
             <p>Play, stop, switch sounds, and set Nullwave’s independent volume without launching another copy.</p>
           </div>
-          <pre aria-label="Nullwave command line examples"><code><span>$</span> nullwavectl noise brown
+          <pre><code><span>$</span> nullwavectl noise brown
 <span>$</span> nullwavectl volume 25
 <span>$</span> nullwavectl play</code></pre>
         </article>
