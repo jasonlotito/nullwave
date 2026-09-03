@@ -20,6 +20,21 @@ Its lunar-wave icon represents the app's dark sound and low-frequency waves.
 - **Detect headset call mode** optionally pauses when the same device becomes both the system input and output. It resumes afterward only when Nullwave was previously playing. It does not inspect applications or record microphone audio, and it can be disabled for audio setups that do not follow this pattern.
 - Choose **Quit Nullwave** in the settings window to close the app.
 
+### Keyboard access
+
+Nullwave uses standard macOS controls throughout. Sliders adjust with the arrow
+keys when focused, and the application menu provides these commands whenever
+Nullwave is active:
+
+- **Space** — play or stop from Quick Controls
+- **Command-Shift-N** — show Quick Controls
+- **Command-Shift-P** — play or stop Nullwave
+- **Command-,** — open Settings
+- **Command-Q** — quit
+
+Use Control-F2 (or Fn-Control-F2, depending on your keyboard settings) to move
+keyboard focus to the macOS menu bar and reach the Nullwave status item.
+
 ## Build and run
 
 Requires macOS 14 or newer and Xcode 16 or newer.

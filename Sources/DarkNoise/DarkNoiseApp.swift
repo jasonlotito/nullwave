@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var eventMonitor: Any?
     private var playbackObserver: AnyCancellable?
     private var commandObserver: NSObjectProtocol?
+    private var playbackMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -34,10 +35,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         button.imagePosition = .imageOnly
         button.title = ""
         button.setAccessibilityLabel("Nullwave")
+        button.setAccessibilityHelp("Press to play or stop. Use the Nullwave menu for quick controls and settings.")
         button.toolTip = "Nullwave — click to play"
         button.target = self
         button.action = #selector(statusItemClicked(_:))
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        configureApplicationMenu()
 
         playbackObserver = audio.$isPlaying
             .dropFirst()
@@ -47,7 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         popover = NSPopover()
         popover.behavior = .transient
-        popover.animates = true
+        updatePopoverAnimationPreference()
         popover.contentSize = NSSize(width: 320, height: 230)
         popover.contentViewController = NSHostingController(
             rootView: QuickControlsView(
@@ -119,13 +122,83 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
+    @objc private func togglePlayback() {
+        callActivity.togglePlaybackManually()
+    }
+
+    @objc private func showQuickControls() {
+        guard let button = statusItem.button else { return }
+        if !popover.isShown {
+            presentQuickControls(relativeTo: button)
+        }
+    }
+
+    @objc private func openSettings() {
+        showSettingsWindow()
+    }
+
     private func showSettings(relativeTo button: NSStatusBarButton) {
         if popover.isShown {
             popover.performClose(nil)
         } else {
-            loginItem.refresh()
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            presentQuickControls(relativeTo: button)
         }
+    }
+
+    private func presentQuickControls(relativeTo button: NSStatusBarButton) {
+        loginItem.refresh()
+        updatePopoverAnimationPreference()
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        popover.contentViewController?.view.window?.makeKey()
+    }
+
+    private func updatePopoverAnimationPreference() {
+        popover?.animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
+
+    private func configureApplicationMenu() {
+        let mainMenu = NSMenu()
+        let appMenuItem = NSMenuItem()
+        let appMenu = NSMenu(title: "Nullwave")
+
+        let quickControlsItem = NSMenuItem(
+            title: "Show Quick Controls",
+            action: #selector(showQuickControls),
+            keyEquivalent: "n"
+        )
+        quickControlsItem.keyEquivalentModifierMask = [.command, .shift]
+        quickControlsItem.target = self
+        appMenu.addItem(quickControlsItem)
+
+        let playbackItem = NSMenuItem(
+            title: "Play Nullwave",
+            action: #selector(togglePlayback),
+            keyEquivalent: "p"
+        )
+        playbackItem.keyEquivalentModifierMask = [.command, .shift]
+        playbackItem.target = self
+        playbackMenuItem = playbackItem
+        appMenu.addItem(playbackItem)
+
+        let settingsItem = NSMenuItem(
+            title: "Settings…",
+            action: #selector(openSettings),
+            keyEquivalent: ","
+        )
+        settingsItem.keyEquivalentModifierMask = .command
+        settingsItem.target = self
+        appMenu.addItem(settingsItem)
+        appMenu.addItem(.separator())
+
+        let quitItem = NSMenuItem(
+            title: "Quit Nullwave",
+            action: #selector(NSApplication.terminate(_:)),
+            keyEquivalent: "q"
+        )
+        appMenu.addItem(quitItem)
+        appMenuItem.submenu = appMenu
+        mainMenu.addItem(appMenuItem)
+        NSApp.mainMenu = mainMenu
     }
 
     private func showSettingsWindow() {
@@ -174,6 +247,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             : (audio.isPlaying ? "playing" : "stopped")
         statusItem.button?.setAccessibilityLabel("Nullwave \(status)")
         statusItem.button?.toolTip = "Nullwave — \(status)"
+        playbackMenuItem?.title = audio.isPlaying ? "Stop Nullwave" : "Play Nullwave"
     }
 
     private func menuBarIcon() -> NSImage? {
@@ -320,6 +394,7 @@ private struct QuickControlsView: View {
                 Image(systemName: audio.isPlaying ? "waveform.circle.fill" : "waveform.circle")
                     .font(.title)
                     .foregroundStyle(audio.isPlaying ? Color.accentColor : .secondary)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Nullwave").font(.headline)
                     Text("\(audio.kind.displayName) · \(playbackStatus)")
@@ -331,6 +406,9 @@ private struct QuickControlsView: View {
                     callActivity.togglePlaybackManually()
                 }
                     .keyboardShortcut(.space, modifiers: [])
+                    .accessibilityHint(audio.isPlaying
+                        ? "Stops the current noise."
+                        : "Starts \(audio.kind.displayName) noise.")
             }
 
             VStack(alignment: .leading, spacing: 6) {
@@ -345,6 +423,9 @@ private struct QuickControlsView: View {
                     .labelsHidden()
                     .pickerStyle(.segmented)
                     .fixedSize(horizontal: true, vertical: false)
+                    .accessibilityLabel("Favorite sound")
+                    .accessibilityValue(audio.kind.displayName)
+                    .accessibilityHint("Choose a favorite sound to play.")
                     Spacer(minLength: 0)
                 }
             }
@@ -359,8 +440,13 @@ private struct QuickControlsView: View {
                 }
                 HStack {
                     Image(systemName: "speaker.fill")
+                        .accessibilityHidden(true)
                     Slider(value: $audio.volume, in: 0...1)
+                        .accessibilityLabel("Noise volume")
+                        .accessibilityValue("\(Int(audio.volume * 100)) percent")
+                        .accessibilityHint("Adjusts Nullwave without changing the Mac system volume.")
                     Image(systemName: "speaker.wave.3.fill")
+                        .accessibilityHidden(true)
                 }
             }
 
@@ -373,6 +459,8 @@ private struct QuickControlsView: View {
                 }
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(",", modifiers: .command)
+            .accessibilityHint("Opens the full Nullwave settings window.")
         }
         .padding(16)
         .frame(width: 320)
@@ -464,6 +552,7 @@ private struct FullSettingsView: View {
                         .font(.system(size: 34))
                         .foregroundStyle(Color.accentColor)
                         .frame(width: 44)
+                        .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(kind.displayName)
                             .font(.largeTitle.bold())
@@ -477,12 +566,14 @@ private struct FullSettingsView: View {
                         }
                         .controlSize(.large)
                         .buttonStyle(.bordered)
+                        .accessibilityHint("Stops the preview and returns to the previous sound.")
                     } else {
                         Button("Preview") {
                             audio.togglePreview(of: kind)
                         }
                         .controlSize(.large)
                         .buttonStyle(.borderedProminent)
+                        .accessibilityHint("Temporarily previews \(kind.displayName) without changing the current sound.")
                     }
                 }
 
@@ -505,11 +596,18 @@ private struct FullSettingsView: View {
                     }
                     HStack {
                         Image(systemName: "speaker.fill")
+                            .accessibilityHidden(true)
                         Slider(value: Binding(
                             get: { audio.savedVolume(for: kind) },
                             set: { audio.setSavedVolume($0, for: kind) }
                         ), in: 0...1)
+                        .accessibilityLabel("Saved volume for \(kind.displayName)")
+                        .accessibilityValue("\(Int(audio.savedVolume(for: kind) * 100)) percent")
+                        .accessibilityHint(audio.previewKind == kind
+                            ? "Adjusts the preview and remembers this volume."
+                            : "Remembers this volume without changing the sound currently playing.")
                         Image(systemName: "speaker.wave.3.fill")
+                            .accessibilityHidden(true)
                     }
                     Text(audio.previewKind == kind
                         ? "Adjusts this preview and remembers the volume for next time."
@@ -569,6 +667,7 @@ private struct FullSettingsView: View {
                     Image(systemName: "gearshape.fill")
                         .font(.system(size: 32))
                         .foregroundStyle(Color.accentColor)
+                        .accessibilityHidden(true)
                     Text("General")
                         .font(.largeTitle.bold())
                 }
@@ -577,6 +676,7 @@ private struct FullSettingsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Toggle("Detect headset call mode", isOn: $callActivity.isEnabled)
                             .toggleStyle(.switch)
+                            .accessibilityHint("Pauses Nullwave when the same audio device handles input and output, then resumes afterward.")
                         Text(callActivity.isPausedForCall
                             ? "The same device is handling input and output. Nullwave will resume when that route changes."
                             : "When the same device is selected for system input and output, Nullwave pauses until that route changes.")
@@ -602,6 +702,7 @@ private struct FullSettingsView: View {
                             )
                         )
                         .toggleStyle(.switch)
+                        .accessibilityHint("Starts Nullwave automatically after you sign in to this Mac.")
 
                         if loginItem.requiresApproval {
                             Button("Approval required — Open Login Items") {
@@ -628,6 +729,7 @@ private struct FullSettingsView: View {
                         }
                         Spacer()
                         Button("Check for Updates…", action: checkForUpdates)
+                            .accessibilityHint("Checks the Nullwave update feed now.")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(6)
@@ -656,6 +758,7 @@ private struct FullSettingsView: View {
                             Button("Install Command-Line Tool…") {
                                 commandLineTool.install()
                             }
+                            .accessibilityHint("Installs nullwavectl at \(commandLineTool.destinationPath).")
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -688,6 +791,7 @@ private struct FullSettingsView: View {
                     Image(systemName: "waveform.circle.fill")
                         .font(.system(size: 96))
                         .foregroundStyle(Color.accentColor)
+                        .accessibilityLabel("Nullwave logo")
                 }
 
                 VStack(spacing: 5) {
@@ -742,6 +846,7 @@ private struct FullSettingsView: View {
                 HStack {
                     Image(systemName: "line.3.horizontal")
                         .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
                     Text("\(index + 1)")
                         .foregroundStyle(.secondary)
                         .frame(width: 16, alignment: .trailing)
@@ -755,6 +860,9 @@ private struct FullSettingsView: View {
                     }
                     .labelsHidden()
                     .frame(maxWidth: 240)
+                    .accessibilityLabel("Favorite slot \(index + 1)")
+                    .accessibilityValue(kind.displayName)
+                    .accessibilityHint("Choose the sound shown in this quick-control slot.")
                 }
                 .padding(8)
                 .background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 8))

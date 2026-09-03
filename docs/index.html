@@ -30,8 +30,8 @@
   <meta name="twitter:image:alt" content="Glowing violet and blue Nullwave waves flowing beneath a luminous dark orb">
 
   <title>Nullwave — Free Noise Generator for the macOS Menu Bar</title>
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/nullwave-icon.png">
-  <link rel="apple-touch-icon" href="assets/nullwave-icon.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/nullwave-icon-64.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/nullwave-icon-180.png">
   <link rel="alternate" type="application/rss+xml" title="Nullwave Updates" href="https://nullwaveapp.com/appcast.xml">
   <link rel="stylesheet" href="styles.css">
   <script type="application/ld+json">
@@ -77,7 +77,7 @@
   <header class="site-header">
     <nav class="nav shell" aria-label="Main navigation">
       <a class="brand" href="#top" aria-label="Nullwave home">
-        <img src="assets/nullwave-icon.png" alt="" width="36" height="36">
+        <img src="assets/nullwave-icon-64.png" srcset="assets/nullwave-icon-96.png 2x" alt="" width="36" height="36">
         <span>Nullwave</span>
       </a>
       <div class="nav-links">
@@ -106,7 +106,7 @@
         <p class="privacy-line"><span>No account</span><span>No tracking</span><span>No ads</span><span>No cost</span></p>
       </div>
 
-      <div class="hero-visual" role="group" aria-label="Nullwave quick controls in the macOS menu bar">
+      <div class="hero-visual" aria-hidden="true">
         <div class="orbit orbit-one"></div>
         <div class="orbit orbit-two"></div>
         <svg class="wave-field" viewBox="0 0 780 420" aria-hidden="true">
@@ -188,18 +188,18 @@
           </div>
         </article>
         <article class="feature-card">
-          <div class="feature-icon">★</div>
+          <div class="feature-icon" aria-hidden="true">★</div>
           <h3>Three favorites. Right there.</h3>
           <p>Choose up to three sounds for the menu-bar panel. Reorder them whenever your routine changes.</p>
         </article>
         <article class="feature-card">
-          <div class="feature-icon">▶</div>
+          <div class="feature-icon" aria-hidden="true">▶</div>
           <h3>Preview without disruption</h3>
           <p>Explore another sound, then stop the preview or leave its page. Nullwave returns to what you were hearing before.</p>
         </article>
         <article class="feature-card feature-wide code-card">
           <div>
-            <div class="feature-icon">›_</div>
+            <div class="feature-icon" aria-hidden="true">›_</div>
             <h3>Controllable from the command line</h3>
             <p>Play, stop, switch sounds, and set Nullwave’s independent volume without launching another copy.</p>
           </div>
@@ -218,17 +218,17 @@
           <p>From low, enveloping rumble to bright, detail-masking energy—and a few familiar environments in between.</p>
         </div>
         <div class="sound-grid">
-          <article><i>◐</i><h3>Dark</h3><p>Low-passed and bass-heavy</p></article>
-          <article><i>◒</i><h3>Brown</h3><p>Deep and softly weighted</p></article>
-          <article><i>♥</i><h3>Pink</h3><p>Balanced for long listening</p></article>
-          <article><i>✦</i><h3>White</h3><p>Even, bright masking energy</p></article>
-          <article><i>◑</i><h3>Gray</h3><p>Shaped for perceived balance</p></article>
-          <article><i>≋</i><h3>Blue</h3><p>Crisp, high-frequency detail</p></article>
-          <article><i>⌁</i><h3>Violet</h3><p>The brightest spectral color</p></article>
-          <article><i>↓</i><h3>Deep</h3><p>Extra-low nighttime rumble</p></article>
-          <article><i>✣</i><h3>Fan</h3><p>A steady mechanical hush</p></article>
-          <article><i>✈</i><h3>Cabin</h3><p>Low aircraft ambience</p></article>
-          <article><i>≋</i><h3>Ocean</h3><p>Slow, rolling wave motion</p></article>
+          <article><i aria-hidden="true">◐</i><h3>Dark</h3><p>Low-passed and bass-heavy</p></article>
+          <article><i aria-hidden="true">◒</i><h3>Brown</h3><p>Deep and softly weighted</p></article>
+          <article><i aria-hidden="true">♥</i><h3>Pink</h3><p>Balanced for long listening</p></article>
+          <article><i aria-hidden="true">✦</i><h3>White</h3><p>Even, bright masking energy</p></article>
+          <article><i aria-hidden="true">◑</i><h3>Gray</h3><p>Shaped for perceived balance</p></article>
+          <article><i aria-hidden="true">≋</i><h3>Blue</h3><p>Crisp, high-frequency detail</p></article>
+          <article><i aria-hidden="true">⌁</i><h3>Violet</h3><p>The brightest spectral color</p></article>
+          <article><i aria-hidden="true">↓</i><h3>Deep</h3><p>Extra-low nighttime rumble</p></article>
+          <article><i aria-hidden="true">✣</i><h3>Fan</h3><p>A steady mechanical hush</p></article>
+          <article><i aria-hidden="true">✈</i><h3>Cabin</h3><p>Low aircraft ambience</p></article>
+          <article><i aria-hidden="true">≋</i><h3>Ocean</h3><p>Slow, rolling wave motion</p></article>
         </div>
       </div>
     </section>
@@ -243,15 +243,15 @@
         <h2>A good Mac citizen.</h2>
         <p>Nullwave is a true native menu-bar app. It launches at login when you ask, uses the system accent color, follows light and dark appearance, and generates audio locally.</p>
         <ul class="check-list">
-          <li><span>✓</span><div><strong>Headset call-mode detection</strong><small>Optionally pauses when the same device handles input and output, then resumes afterward.</small></div></li>
-          <li><span>✓</span><div><strong>Generated locally</strong><small>Every sound is created in real time on your Mac, with no audio files or loops.</small></div></li>
-          <li><span>✓</span><div><strong>Independent volume</strong><small>Nullwave never changes your Mac’s system volume.</small></div></li>
+          <li><span aria-hidden="true">✓</span><div><strong>Headset call-mode detection</strong><small>Optionally pauses when the same device handles input and output, then resumes afterward.</small></div></li>
+          <li><span aria-hidden="true">✓</span><div><strong>Generated locally</strong><small>Every sound is created in real time on your Mac, with no audio files or loops.</small></div></li>
+          <li><span aria-hidden="true">✓</span><div><strong>Independent volume</strong><small>Nullwave never changes your Mac’s system volume.</small></div></li>
         </ul>
       </div>
     </section>
 
     <section class="section shell final-cta">
-      <img src="assets/nullwave-icon.png" alt="" width="96" height="96" loading="lazy">
+      <img src="assets/nullwave-icon-96.png" srcset="assets/nullwave-icon-192.png 2x" alt="" width="96" height="96" loading="lazy">
       <div class="cta-wave" aria-hidden="true"></div>
       <h2>Make some room to think.</h2>
       <p>Free, private, and ready for your menu bar. No account required.</p>
@@ -265,7 +265,7 @@
 
   <footer class="footer">
     <div class="shell footer-inner">
-      <a class="brand" href="#top"><img src="assets/nullwave-icon.png" alt="" width="30" height="30"><span>Nullwave</span></a>
+      <a class="brand" href="#top"><img src="assets/nullwave-icon-64.png" srcset="assets/nullwave-icon-96.png 2x" alt="" width="30" height="30"><span>Nullwave</span></a>
       <p>Made by <a href="https://github.com/jasonlotito">Jason Lotito</a>.</p>
       <div><a href="https://github.com/jasonlotito/nullwave/releases">Releases</a><a href="https://github.com/jasonlotito/nullwave">GitHub</a></div>
     </div>
