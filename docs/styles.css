@@ -71,6 +71,9 @@ h1 span { color: transparent; background: linear-gradient(100deg, #a289ff 15%, #
 .hero-actions { display: flex; align-items: center; gap: 24px; margin-top: 32px; }
 .text-link { color: #d6d3eb; font-weight: 600; text-decoration: none; }
 .requirements { margin: 16px 0 0; color: #74758b; font-size: .78rem; }
+.privacy-line { display: flex; flex-wrap: wrap; gap: 8px 17px; margin: 20px 0 0; color: #a9a8bd; font-size: .75rem; font-weight: 650; }
+.privacy-line span { position: relative; }
+.privacy-line span:not(:last-child)::after { content: "·"; position: absolute; right: -11px; color: #56576b; }
 
 .hero-visual { position: relative; min-height: 500px; display: grid; place-items: center; isolation: isolate; }
 .orbit { position: absolute; z-index: -2; border: 1px solid rgba(133, 112, 255, .2); border-radius: 50%; }
@@ -170,6 +173,7 @@ code span { color: var(--blue); }
   .hero-copy { position: relative; z-index: 2; }
   .lede { margin-inline: auto; }
   .hero-actions { justify-content: center; }
+  .privacy-line { justify-content: center; }
   .hero-visual { min-height: 460px; }
   .showcase { grid-template-columns: 1fr; gap: 55px; }
   .showcase-copy { max-width: 680px; }
