@@ -86,6 +86,21 @@ process and never launches the app itself:
 If Nullwave is installed, the same tool is available inside its bundle at
 `/Applications/Nullwave.app/Contents/MacOS/nullwavectl`.
 
+In **Nullwave Settings → General → Command Line**, choose **Install Command-Line
+Tool…** to make `nullwavectl` available system-wide. macOS asks for an
+administrator password before creating `/usr/local/bin/nullwavectl`.
+
+Developers can perform the same installation with:
+
+```sh
+make install-cli
+nullwavectl play
+```
+
+The installed command is a symlink into `/Applications/Nullwave.app`, so it
+continues to work after Nullwave updates itself. The Make target accepts
+`NULLWAVE_APP` and `CLI_INSTALL_DIR` overrides when needed.
+
 Available sounds are Dark, Brown, Pink, White, Gray, Blue, Violet, Deep, Fan,
 Cabin, and Ocean.
 

@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let audio = NoiseAudioController()
     private lazy var callActivity = CallActivityController(audio: audio)
     private let loginItem = LaunchAtLoginController()
+    private let commandLineTool = CommandLineToolInstaller()
     private let updaterController = SPUStandardUpdaterController(
         startingUpdater: true,
         updaterDelegate: nil,
@@ -136,6 +137,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     audio: audio,
                     callActivity: callActivity,
                     loginItem: loginItem,
+                    commandLineTool: commandLineTool,
                     checkForUpdates: { [weak self] in
                         self?.updaterController.checkForUpdates(nil)
                     },
@@ -154,6 +156,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
 
         loginItem.refresh()
+        commandLineTool.refresh()
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
@@ -206,6 +209,83 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         default:
             break
         }
+    }
+}
+
+@MainActor
+private final class CommandLineToolInstaller: ObservableObject {
+    @Published private(set) var isInstalled = false
+    @Published private(set) var errorMessage: String?
+
+    let destinationPath = "/usr/local/bin/nullwavectl"
+
+    init() {
+        refresh()
+    }
+
+    func refresh() {
+        guard let bundledToolURL else {
+            isInstalled = false
+            return
+        }
+
+        let destinationURL = URL(fileURLWithPath: destinationPath)
+        isInstalled = FileManager.default.fileExists(atPath: destinationPath)
+            && destinationURL.resolvingSymlinksInPath().standardizedFileURL
+                == bundledToolURL.resolvingSymlinksInPath().standardizedFileURL
+    }
+
+    func install() {
+        errorMessage = nil
+        guard let bundledToolURL else {
+            errorMessage = "The command-line tool is missing from this copy of Nullwave."
+            return
+        }
+        guard Bundle.main.bundleURL.path.hasPrefix("/Applications/") else {
+            errorMessage = "Move Nullwave to Applications before installing its command-line tool."
+            return
+        }
+
+        let command = [
+            "/bin/mkdir -p \(shellQuoted("/usr/local/bin"))",
+            "/bin/ln -sfn \(shellQuoted(bundledToolURL.path)) \(shellQuoted(destinationPath))"
+        ].joined(separator: " && ")
+        let appleScriptCommand = command
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        guard let script = NSAppleScript(
+            source: "do shell script \"\(appleScriptCommand)\" with administrator privileges"
+        ) else {
+            errorMessage = "Nullwave could not prepare the command-line tool installer."
+            return
+        }
+
+        var scriptError: NSDictionary?
+        script.executeAndReturnError(&scriptError)
+        if let scriptError {
+            let number = scriptError[NSAppleScript.errorNumber] as? Int
+            errorMessage = number == -128
+                ? "Installation was canceled."
+                : (scriptError[NSAppleScript.errorMessage] as? String
+                    ?? "Nullwave could not install the command-line tool.")
+            refresh()
+            return
+        }
+
+        refresh()
+        if !isInstalled {
+            errorMessage = "The command-line tool was installed, but Nullwave could not verify it."
+        }
+    }
+
+    private var bundledToolURL: URL? {
+        let url = Bundle.main.bundleURL
+            .appendingPathComponent("Contents/MacOS/nullwavectl", isDirectory: false)
+        return FileManager.default.isExecutableFile(atPath: url.path) ? url : nil
+    }
+
+    private func shellQuoted(_ value: String) -> String {
+        "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 }
 
@@ -306,6 +386,7 @@ private struct FullSettingsView: View {
     @ObservedObject var audio: NoiseAudioController
     @ObservedObject var callActivity: CallActivityController
     @ObservedObject var loginItem: LaunchAtLoginController
+    @ObservedObject var commandLineTool: CommandLineToolInstaller
     let checkForUpdates: () -> Void
     let quit: () -> Void
     @State private var selection: SettingsDestination
@@ -314,12 +395,14 @@ private struct FullSettingsView: View {
         audio: NoiseAudioController,
         callActivity: CallActivityController,
         loginItem: LaunchAtLoginController,
+        commandLineTool: CommandLineToolInstaller,
         checkForUpdates: @escaping () -> Void,
         quit: @escaping () -> Void
     ) {
         self.audio = audio
         self.callActivity = callActivity
         self.loginItem = loginItem
+        self.commandLineTool = commandLineTool
         self.checkForUpdates = checkForUpdates
         self.quit = quit
         _selection = State(initialValue: .sound(audio.kind))
@@ -537,6 +620,35 @@ private struct FullSettingsView: View {
                         }
                         Spacer()
                         Button("Check for Updates…", action: checkForUpdates)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(6)
+                }
+
+                GroupBox("Command Line") {
+                    HStack(spacing: 16) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(commandLineTool.isInstalled
+                                ? "nullwavectl is installed."
+                                : "Control the running app from Terminal.")
+                            Text(commandLineTool.destinationPath)
+                                .font(.caption.monospaced())
+                                .foregroundStyle(.secondary)
+                            if let errorMessage = commandLineTool.errorMessage {
+                                Text(errorMessage)
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                            }
+                        }
+                        Spacer()
+                        if commandLineTool.isInstalled {
+                            Label("Installed", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                        } else {
+                            Button("Install Command-Line Tool…") {
+                                commandLineTool.install()
+                            }
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(6)

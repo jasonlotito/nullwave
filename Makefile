@@ -1,7 +1,9 @@
-.PHONY: build test app signed-app release run xcode-build xcode-test clean
+.PHONY: build test app signed-app release install-cli run xcode-build xcode-test clean
 
 DEVELOPER_IDENTITY ?= Developer ID Application: Jason Lotito (47UF97CY9G)
 NOTARY_PROFILE ?= nullwave-notary
+NULLWAVE_APP ?= /Applications/Nullwave.app
+CLI_INSTALL_DIR ?= /usr/local/bin
 
 build: app
 
@@ -17,6 +19,12 @@ signed-app:
 
 release:
 	SIGNING_IDENTITY="$(DEVELOPER_IDENTITY)" NOTARY_PROFILE="$(NOTARY_PROFILE)" ./scripts/release.sh "$(VERSION)"
+
+install-cli:
+	test -x "$(NULLWAVE_APP)/Contents/MacOS/nullwavectl"
+	sudo mkdir -p "$(CLI_INSTALL_DIR)"
+	sudo ln -sfn "$(NULLWAVE_APP)/Contents/MacOS/nullwavectl" "$(CLI_INSTALL_DIR)/nullwavectl"
+	@echo "Installed: $(CLI_INSTALL_DIR)/nullwavectl"
 
 run: app
 	open "dist/Nullwave.app"
