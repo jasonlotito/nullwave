@@ -14,6 +14,8 @@ Its lunar-wave icon represents the app's dark sound and low-frequency waves.
 - Right-click it to choose among your three favorite sounds and adjust the current sound's volume.
 - Choose **Open Nullwave Settings…** for the complete sound library, descriptions, per-sound volume, and favorite ordering.
 - Enable **Launch at Login** to keep it waiting in the menu bar after signing in.
+- Nullwave checks its signed update feed daily; use **Check for Updates…** in
+  General Settings whenever you want to check immediately.
 - Every sound remembers its own volume across restarts; new installs default to Dark at 30%.
 - **Detect headset call mode** optionally pauses when the same device becomes both the system input and output. It resumes afterward only when Nullwave was previously playing. It does not inspect applications or record microphone audio, and it can be disabled for audio setups that do not follow this pattern.
 - Choose **Quit Nullwave** in the settings window to close the app.
@@ -41,6 +43,25 @@ The Xcode target supports normal Run, Test, Profile, and Archive workflows.
 App Store distribution will additionally require selecting an Apple Developer
 team, enabling the App Sandbox and appropriate entitlements, and configuring
 the App Store signing/profile settings for the final bundle identifier.
+
+For direct distribution outside the App Store, `make release VERSION=1.1.0`
+runs tests, builds, signs, notarizes, staples, packages, updates the signed
+Sparkle appcast, commits the release metadata, and publishes the GitHub
+release. It expects the
+`Developer ID Application: Jason Lotito (47UF97CY9G)` identity and a
+`notarytool` Keychain profile named `nullwave-notary`. Override either without
+editing the project when necessary:
+
+```sh
+make release VERSION=1.1.0 \
+  DEVELOPER_IDENTITY="Developer ID Application: Example (TEAMID)" \
+  NOTARY_PROFILE="example-notary"
+```
+
+The private Sparkle EdDSA key remains in Keychain under the `nullwave` account.
+GitHub Actions copies the newest private release asset into the public Pages
+deployment, so downloads and in-app updates work without making the source
+repository public or committing release binaries.
 
 If you enable **Launch at Login** while running the development copy, the app
 offers to install itself as `/Applications/Nullwave.app`, relaunches the

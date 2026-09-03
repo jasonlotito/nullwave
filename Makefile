@@ -1,8 +1,9 @@
-.PHONY: build test app run xcode-build xcode-test clean
+.PHONY: build test app signed-app release run xcode-build xcode-test clean
 
-build:
-	mkdir -p .build/ModuleCache .build/swiftpm-cache
-	CLANG_MODULE_CACHE_PATH="$(CURDIR)/.build/ModuleCache" SWIFTPM_MODULECACHE_OVERRIDE="$(CURDIR)/.build/ModuleCache" swift build --disable-sandbox --cache-path "$(CURDIR)/.build/swiftpm-cache"
+DEVELOPER_IDENTITY ?= Developer ID Application: Jason Lotito (47UF97CY9G)
+NOTARY_PROFILE ?= nullwave-notary
+
+build: app
 
 test:
 	mkdir -p .build/ModuleCache .build/swiftpm-cache
@@ -10,6 +11,12 @@ test:
 
 app:
 	./scripts/build-app.sh
+
+signed-app:
+	SIGNING_IDENTITY="$(DEVELOPER_IDENTITY)" ./scripts/build-app.sh
+
+release:
+	SIGNING_IDENTITY="$(DEVELOPER_IDENTITY)" NOTARY_PROFILE="$(NOTARY_PROFILE)" ./scripts/release.sh "$(VERSION)"
 
 run: app
 	open "dist/Nullwave.app"

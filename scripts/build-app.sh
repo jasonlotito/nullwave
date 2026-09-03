@@ -9,9 +9,12 @@ swift build --disable-sandbox --cache-path "$PWD/.build/swiftpm-cache" -c releas
 
 APP_DIR="dist/Nullwave.app"
 CONTENTS="$APP_DIR/Contents"
-mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources"
+SIGNING_IDENTITY="${SIGNING_IDENTITY:--}"
+rm -rf "$APP_DIR"
+mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources" "$CONTENTS/Frameworks"
 cp .build/release/Nullwave "$CONTENTS/MacOS/Nullwave"
 cp .build/release/nullwavectl "$CONTENTS/MacOS/nullwavectl"
+ditto .build/release/Sparkle.framework "$CONTENTS/Frameworks/Sparkle.framework"
 cp .build/release/nullwavectl dist/nullwavectl
 cp Resources/Info.plist "$CONTENTS/Info.plist"
 cp Resources/AppIcon.png "$CONTENTS/Resources/AppIcon.png"
@@ -23,6 +26,20 @@ xcrun actool Resources/Assets.xcassets \
     --app-icon AppIcon \
     --output-partial-info-plist .build/AppIcon-partial.plist
 
-codesign --force --sign - "$CONTENTS/MacOS/nullwavectl"
-codesign --force --sign - "$APP_DIR"
+sign_item() {
+    if [ "$SIGNING_IDENTITY" = "-" ]; then
+        codesign --force --sign - "$1"
+    else
+        codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$1"
+    fi
+}
+
+if [ "$SIGNING_IDENTITY" = "-" ]; then
+    codesign --force --deep --sign - "$CONTENTS/Frameworks/Sparkle.framework"
+else
+    codesign --force --deep --options runtime --timestamp \
+        --sign "$SIGNING_IDENTITY" "$CONTENTS/Frameworks/Sparkle.framework"
+fi
+sign_item "$CONTENTS/MacOS/nullwavectl"
+sign_item "$APP_DIR"
 echo "Built: $PWD/$APP_DIR"

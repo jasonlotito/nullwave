@@ -28,5 +28,13 @@
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUFeedURL</key>
+    <string>https://jasonlotito.github.io/nullwave/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>Gd4SncpltksNUgC5xXFOcuTHEqrwpbj19Hp46thpPb4=</string>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
 </dict>
 </plist>

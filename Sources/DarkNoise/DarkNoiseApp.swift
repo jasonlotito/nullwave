@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import Sparkle
 import SwiftUI
 
 @MainActor
@@ -7,6 +8,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let audio = NoiseAudioController()
     private lazy var callActivity = CallActivityController(audio: audio)
     private let loginItem = LaunchAtLoginController()
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private var settingsWindow: NSWindow?
@@ -130,6 +136,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     audio: audio,
                     callActivity: callActivity,
                     loginItem: loginItem,
+                    checkForUpdates: { [weak self] in
+                        self?.updaterController.checkForUpdates(nil)
+                    },
                     quit: { NSApp.terminate(nil) }
                 )
             )
@@ -297,6 +306,7 @@ private struct FullSettingsView: View {
     @ObservedObject var audio: NoiseAudioController
     @ObservedObject var callActivity: CallActivityController
     @ObservedObject var loginItem: LaunchAtLoginController
+    let checkForUpdates: () -> Void
     let quit: () -> Void
     @State private var selection: SettingsDestination
 
@@ -304,11 +314,13 @@ private struct FullSettingsView: View {
         audio: NoiseAudioController,
         callActivity: CallActivityController,
         loginItem: LaunchAtLoginController,
+        checkForUpdates: @escaping () -> Void,
         quit: @escaping () -> Void
     ) {
         self.audio = audio
         self.callActivity = callActivity
         self.loginItem = loginItem
+        self.checkForUpdates = checkForUpdates
         self.quit = quit
         _selection = State(initialValue: .sound(audio.kind))
     }
@@ -510,6 +522,21 @@ private struct FullSettingsView: View {
                                 .font(.caption)
                                 .foregroundStyle(.red)
                         }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(6)
+                }
+
+                GroupBox("Updates") {
+                    HStack(spacing: 16) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Automatic update checks are enabled.")
+                            Text("Nullwave checks once a day and always asks before installing.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button("Check for Updates…", action: checkForUpdates)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(6)

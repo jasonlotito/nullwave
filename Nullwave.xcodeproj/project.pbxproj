@@ -16,6 +16,7 @@
 		B00000000000000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000008 /* Assets.xcassets */; };
 		B00000000000000000000009 /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000009 /* AppIcon.png */; };
 		B0000000000000000000000A /* MenuBarIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000A /* MenuBarIcon.png */; };
+		B0000000000000000000000B /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 310000000000000000000001 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,7 +51,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		D00000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		D00000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (B0000000000000000000000B /* Sparkle in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
 		D00000000000000000000004 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		D00000000000000000000006 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
@@ -88,6 +89,7 @@
 			buildRules = ();
 			dependencies = ();
 			name = Nullwave;
+			packageProductDependencies = (310000000000000000000001 /* Sparkle */);
 			productName = Nullwave;
 			productReference = A0000000000000000000000C /* Nullwave.app */;
 			productType = "com.apple.product-type.application";
@@ -135,6 +137,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (en, Base);
 			mainGroup = C00000000000000000000001;
+			packageReferences = (300000000000000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */);
 			productRefGroup = C00000000000000000000008 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -173,6 +176,22 @@
 		100000000000000000000003 /* Build configuration list for PBXNativeTarget "nullwavectl" */ = {isa = XCConfigurationList; buildConfigurations = (F00000000000000000000005, F00000000000000000000006); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 		100000000000000000000004 /* Build configuration list for PBXNativeTarget "NullwaveTests" */ = {isa = XCConfigurationList; buildConfigurations = (F00000000000000000000007, F00000000000000000000008); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		300000000000000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {kind = exactVersion; version = 2.9.4; };
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		310000000000000000000001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 300000000000000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 000000000000000000000001 /* Project object */;
 }
