@@ -290,6 +290,7 @@ private struct QuickControlsView: View {
 private enum SettingsDestination: Hashable {
     case general
     case sound(NoiseKind)
+    case about
 }
 
 private struct FullSettingsView: View {
@@ -326,6 +327,11 @@ private struct FullSettingsView: View {
                             .tag(SettingsDestination.sound(kind))
                     }
                 }
+
+                Section {
+                    Label("About Nullwave", systemImage: "info.circle")
+                        .tag(SettingsDestination.about)
+                }
             }
             .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 260)
@@ -335,6 +341,8 @@ private struct FullSettingsView: View {
                 generalSettings
             case .sound(let kind):
                 soundDetail(for: kind)
+            case .about:
+                aboutSettings
             }
         }
         .navigationSplitViewStyle(.balanced)
@@ -520,6 +528,62 @@ private struct FullSettingsView: View {
         }
     }
 
+    private var aboutSettings: some View {
+        ScrollView {
+            VStack(spacing: 18) {
+                if let icon = aboutIcon {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .interpolation(.high)
+                        .frame(width: 128, height: 128)
+                        .accessibilityLabel("Nullwave logo")
+                } else {
+                    Image(systemName: "waveform.circle.fill")
+                        .font(.system(size: 96))
+                        .foregroundStyle(Color.accentColor)
+                }
+
+                VStack(spacing: 5) {
+                    Text("Nullwave")
+                        .font(.largeTitle.bold())
+                    Text(versionDescription)
+                        .foregroundStyle(.secondary)
+                }
+
+                Text("A native macOS menu-bar app that generates soothing noise in real time, with independent volume, quick favorites, previews, and optional headset call-mode detection.")
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: 470)
+
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 12) {
+                        LabeledContent("Project") {
+                            Link(
+                                "github.com/jasonlotito/nullwave",
+                                destination: URL(string: "https://github.com/jasonlotito/nullwave")!
+                            )
+                        }
+                        Divider()
+                        LabeledContent("Author") {
+                            Link(
+                                "Jason Lotito",
+                                destination: URL(string: "https://github.com/jasonlotito")!
+                            )
+                        }
+                    }
+                    .padding(6)
+                }
+                .frame(maxWidth: 520)
+
+                Text("Copyright © 2026 Jason Lotito")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(36)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
     private var favoritesEditor: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Quick-control favorites").font(.headline)
@@ -576,6 +640,21 @@ private struct FullSettingsView: View {
 
     private func favoriteSlot(for kind: NoiseKind) -> Int? {
         audio.favoriteKinds.firstIndex(of: kind)
+    }
+
+    private var aboutIcon: NSImage? {
+        guard let url = Bundle.main.url(forResource: "AppIcon", withExtension: "png") else {
+            return NSApp.applicationIconImage
+        }
+        return NSImage(contentsOf: url)
+    }
+
+    private var versionDescription: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+            ?? "1.0"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+            ?? "1"
+        return "Version \(version) (\(build))"
     }
 
     private func favoriteDescription(for kind: NoiseKind) -> String {
