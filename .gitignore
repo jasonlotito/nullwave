@@ -1,0 +1,22 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Built application bundles and distributable binaries
+dist/
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+DerivedData/
+
+# macOS metadata
+.DS_Store
+
+# Logs, temporary files, and editor backups
+*.log
+*.tmp
+*.swp
+*~
+tmp/
+temp/

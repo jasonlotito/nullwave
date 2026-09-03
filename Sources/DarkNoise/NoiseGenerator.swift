@@ -1,0 +1,144 @@
+import AVFoundation
+
+/// Stateful, allocation-free noise synthesis used directly by the audio render thread.
+final class NoiseGenerator: @unchecked Sendable {
+    private let kind: NoiseKind
+    private let sampleRate: Double
+    private var randomState: UInt64 = 0x4d595df4d0f33173
+
+    private var brown = Float.zero
+    private var darkLow = Float.zero
+    private var darkLower = Float.zero
+    private var previousWhite = Float.zero
+    private var secondPreviousWhite = Float.zero
+    private var grayLow = Float.zero
+    private var grayMid = Float.zero
+    private var deepLow = Float.zero
+    private var deepLower = Float.zero
+    private var fanBody = Float.zero
+    private var fanLow = Float.zero
+    private var cabinAir = Float.zero
+    private var cabinRumble = Float.zero
+    private var oceanBody = Float.zero
+    private var oceanLower = Float.zero
+    private var tonePhase = Double.zero
+    private var swellPhase = Double.zero
+
+    // Paul Kellet's economical pink-noise filter state.
+    private var pink0 = Float.zero
+    private var pink1 = Float.zero
+    private var pink2 = Float.zero
+
+    init(kind: NoiseKind, sampleRate: Double) {
+        self.kind = kind
+        self.sampleRate = sampleRate
+    }
+
+    /// Constructs the Core Audio callback outside the main-actor-isolated
+    /// controller. AVAudioEngine invokes this closure on its real-time thread.
+    func makeSourceNode(format: AVAudioFormat) -> AVAudioSourceNode {
+        AVAudioSourceNode(format: format) { [self] _, _, frameCount, audioBufferList -> OSStatus in
+            render(frameCount: frameCount, into: audioBufferList)
+            return noErr
+        }
+    }
+
+    func render(frameCount: AVAudioFrameCount, into audioBufferList: UnsafeMutablePointer<AudioBufferList>) {
+        let buffers = UnsafeMutableAudioBufferListPointer(audioBufferList)
+        guard !buffers.isEmpty else { return }
+
+        for frame in 0..<Int(frameCount) {
+            let sample = nextSample()
+            for buffer in buffers {
+                guard let data = buffer.mData else { continue }
+                data.assumingMemoryBound(to: Float.self)[frame] = sample
+            }
+        }
+    }
+
+    func nextSample() -> Float {
+        let white = nextWhite()
+        switch kind {
+        case .white:
+            return white * 0.22
+        case .pink:
+            pink0 = 0.99765 * pink0 + white * 0.0990460
+            pink1 = 0.96300 * pink1 + white * 0.2965164
+            pink2 = 0.57000 * pink2 + white * 1.0526913
+            return (pink0 + pink1 + pink2 + white * 0.1848) * 0.055
+        case .brown:
+            brown = (brown + white * 0.018).clamped(to: -1...1)
+            brown *= 0.9985
+            return brown * 0.48
+        case .dark:
+            // Two low-pass stages make a soft, very bass-heavy "dark" noise.
+            // Coefficients are derived from cutoff frequencies so the sound stays
+            // consistent when the output device's sample rate changes.
+            let firstAlpha = lowPassAlpha(cutoff: 180)
+            let secondAlpha = lowPassAlpha(cutoff: 65)
+            darkLow += firstAlpha * (white - darkLow)
+            darkLower += secondAlpha * (darkLow - darkLower)
+            return (darkLow * 0.30 + darkLower * 1.8).clamped(to: -0.65...0.65)
+        case .gray:
+            grayLow += lowPassAlpha(cutoff: 120) * (white - grayLow)
+            grayMid += lowPassAlpha(cutoff: 2_000) * (white - grayMid)
+            let high = white - grayMid
+            return (white * 0.08 + grayLow * 0.60 + high * 0.20).clamped(to: -0.65...0.65)
+        case .blue:
+            let sample = (white - previousWhite) * 0.18
+            previousWhite = white
+            return sample.clamped(to: -0.65...0.65)
+        case .violet:
+            let sample = (white - 2 * previousWhite + secondPreviousWhite) * 0.10
+            secondPreviousWhite = previousWhite
+            previousWhite = white
+            return sample.clamped(to: -0.65...0.65)
+        case .deep:
+            deepLow += lowPassAlpha(cutoff: 85) * (white - deepLow)
+            deepLower += lowPassAlpha(cutoff: 28) * (deepLow - deepLower)
+            return (deepLow * 0.18 + deepLower * 2.2).clamped(to: -0.62...0.62)
+        case .fan:
+            fanBody += lowPassAlpha(cutoff: 1_500) * (white - fanBody)
+            fanLow += lowPassAlpha(cutoff: 100) * (fanBody - fanLow)
+            let hum = nextTone(frequency: 58) * 0.035 + Float(sin(tonePhase * 2)) * 0.012
+            return ((fanBody - fanLow) * 0.34 + fanLow * 0.12 + hum).clamped(to: -0.65...0.65)
+        case .cabin:
+            cabinAir += lowPassAlpha(cutoff: 900) * (white - cabinAir)
+            cabinRumble += lowPassAlpha(cutoff: 75) * (cabinAir - cabinRumble)
+            let drone = nextTone(frequency: 43) * 0.045
+            return (cabinAir * 0.18 + cabinRumble * 0.75 + drone).clamped(to: -0.65...0.65)
+        case .ocean:
+            oceanBody += lowPassAlpha(cutoff: 420) * (white - oceanBody)
+            oceanLower += lowPassAlpha(cutoff: 95) * (oceanBody - oceanLower)
+            swellPhase += 2 * Double.pi * 0.075 / sampleRate
+            if swellPhase >= 2 * Double.pi { swellPhase -= 2 * Double.pi }
+            let swell = Float(0.32 + 0.68 * ((sin(swellPhase) + 1) * 0.5))
+            return ((oceanBody * 0.35 + oceanLower * 1.1) * swell).clamped(to: -0.65...0.65)
+        }
+    }
+
+    private func nextTone(frequency: Double) -> Float {
+        tonePhase += 2 * Double.pi * frequency / sampleRate
+        if tonePhase >= 2 * Double.pi { tonePhase -= 2 * Double.pi }
+        return Float(sin(tonePhase))
+    }
+
+    private func nextWhite() -> Float {
+        randomState ^= randomState >> 12
+        randomState ^= randomState << 25
+        randomState ^= randomState >> 27
+        let value = randomState &* 2_685_821_657_736_338_717
+        let normalized = Float(value >> 40) / Float(0x00ff_ffff)
+        return normalized * 2 - 1
+    }
+
+    private func lowPassAlpha(cutoff: Double) -> Float {
+        Float(1 - exp(-2 * Double.pi * cutoff / sampleRate))
+    }
+}
+
+private extension Float {
+    func clamped(to range: ClosedRange<Float>) -> Float {
+        min(max(self, range.lowerBound), range.upperBound)
+    }
+}
