@@ -126,6 +126,7 @@ h2 { margin: 12px 0 16px; font-size: clamp(2.5rem, 5vw, 4.4rem); line-height: 1;
 .feature-card p { max-width: 570px; color: var(--muted); }
 .feature-wide { grid-column: span 2; }
 .feature-icon { display: grid; width: 42px; height: 42px; place-items: center; color: #c5baff; border: 1px solid rgba(145,120,255,.28); border-radius: 12px; background: rgba(119,82,255,.13); font-size: 1.3rem; font-weight: 700; line-height: 1; }
+.feature-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
 .volume-memory { margin-top: 27px; padding: 18px 20px; border: 1px solid rgba(255,255,255,.07); border-radius: 14px; background: rgba(2,3,12,.43); }
 .volume-memory div { display: grid; grid-template-columns: 65px 1fr 42px; align-items: center; gap: 14px; margin: 9px 0; color: #babacd; font-size: .76rem; }
 .volume-memory i { height: 4px; border-radius: 4px; background: linear-gradient(to right, var(--purple) var(--level), rgba(255,255,255,.1) var(--level)); }
