@@ -360,10 +360,19 @@ private struct FullSettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Button(audio.previewKind == kind ? "Stop Preview" : "Preview") {
-                        audio.togglePreview(of: kind)
+                    if audio.previewKind == kind {
+                        Button("Stop Preview") {
+                            audio.togglePreview(of: kind)
+                        }
+                        .controlSize(.large)
+                        .buttonStyle(.bordered)
+                    } else {
+                        Button("Preview") {
+                            audio.togglePreview(of: kind)
+                        }
+                        .controlSize(.large)
+                        .buttonStyle(.borderedProminent)
                     }
-                    .controlSize(.large)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {

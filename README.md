@@ -1,4 +1,8 @@
-# Nullwave
+<p align="center">
+  <img src="Resources/AppIcon.png" width="128" height="128" alt="Nullwave logo">
+</p>
+
+<h1 align="center">Nullwave</h1>
 
 A tiny native macOS menu-bar noise player. It generates audio in real time and
 has its own volume control, independent of the macOS system volume setting.
@@ -24,7 +28,19 @@ make run
 
 This creates an ad-hoc signed app at `dist/Nullwave.app` and opens it. You
 can drag that app into `/Applications` if you want to keep it. For development,
-you can also open `Package.swift` in Xcode and run the `Nullwave` scheme.
+you can open `Nullwave.xcodeproj` in Xcode and run the shared `Nullwave` scheme.
+The Xcode project references the same source and resource files as SwiftPM, so
+the Makefile workflow remains fully supported.
+
+```sh
+make xcode-build
+make xcode-test
+```
+
+The Xcode target supports normal Run, Test, Profile, and Archive workflows.
+App Store distribution will additionally require selecting an Apple Developer
+team, enabling the App Sandbox and appropriate entitlements, and configuring
+the App Store signing/profile settings for the final bundle identifier.
 
 If you enable **Launch at Login** while running the development copy, the app
 offers to install itself as `/Applications/Nullwave.app`, relaunches the

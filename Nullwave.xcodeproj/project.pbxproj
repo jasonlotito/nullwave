@@ -1,0 +1,178 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B00000000000000000000001 /* CallActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000001 /* CallActivityController.swift */; };
+		B00000000000000000000002 /* DarkNoiseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000002 /* DarkNoiseApp.swift */; };
+		B00000000000000000000003 /* LaunchAtLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000003 /* LaunchAtLoginController.swift */; };
+		B00000000000000000000004 /* NoiseAudioController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000004 /* NoiseAudioController.swift */; };
+		B00000000000000000000005 /* NoiseGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000005 /* NoiseGenerator.swift */; };
+		B00000000000000000000006 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000006 /* main.swift */; };
+		B00000000000000000000007 /* NoiseGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000007 /* NoiseGeneratorTests.swift */; };
+		B00000000000000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000008 /* Assets.xcassets */; };
+		B00000000000000000000009 /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000009 /* AppIcon.png */; };
+		B0000000000000000000000A /* MenuBarIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000A /* MenuBarIcon.png */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		200000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E00000000000000000000001;
+			remoteInfo = Nullwave;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		A00000000000000000000001 /* CallActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallActivityController.swift; sourceTree = "<group>"; };
+		A00000000000000000000002 /* DarkNoiseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DarkNoiseApp.swift; sourceTree = "<group>"; };
+		A00000000000000000000003 /* LaunchAtLoginController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginController.swift; sourceTree = "<group>"; };
+		A00000000000000000000004 /* NoiseAudioController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoiseAudioController.swift; sourceTree = "<group>"; };
+		A00000000000000000000005 /* NoiseGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoiseGenerator.swift; sourceTree = "<group>"; };
+		A00000000000000000000006 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		A00000000000000000000007 /* NoiseGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoiseGeneratorTests.swift; sourceTree = "<group>"; };
+		A00000000000000000000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A00000000000000000000009 /* AppIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AppIcon.png; sourceTree = "<group>"; };
+		A0000000000000000000000A /* MenuBarIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = MenuBarIcon.png; sourceTree = "<group>"; };
+		A0000000000000000000000B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A0000000000000000000000C /* Nullwave.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nullwave.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0000000000000000000000D /* nullwavectl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = nullwavectl; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0000000000000000000000E /* NullwaveTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NullwaveTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0000000000000000000000F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		A00000000000000000000010 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		A00000000000000000000011 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = text.script.make; path = Makefile; sourceTree = "<group>"; };
+		A00000000000000000000012 /* build-app.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-app.sh"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D00000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		D00000000000000000000004 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		D00000000000000000000006 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C00000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000002 /* Sources */,
+				C00000000000000000000006 /* Tests */,
+				C00000000000000000000005 /* Resources */,
+				C00000000000000000000009 /* scripts */,
+				A00000000000000000000010 /* Package.swift */,
+				A00000000000000000000011 /* Makefile */,
+				A0000000000000000000000F /* README.md */,
+				C00000000000000000000008 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C00000000000000000000002 /* Sources */ = {isa = PBXGroup; children = (C00000000000000000000003 /* DarkNoise */, C00000000000000000000004 /* NullwaveCLI */); path = Sources; sourceTree = "<group>"; };
+		C00000000000000000000003 /* DarkNoise */ = {isa = PBXGroup; children = (A00000000000000000000001, A00000000000000000000002, A00000000000000000000003, A00000000000000000000004, A00000000000000000000005); path = DarkNoise; sourceTree = "<group>"; };
+		C00000000000000000000004 /* NullwaveCLI */ = {isa = PBXGroup; children = (A00000000000000000000006); path = NullwaveCLI; sourceTree = "<group>"; };
+		C00000000000000000000005 /* Resources */ = {isa = PBXGroup; children = (A00000000000000000000008, A00000000000000000000009, A0000000000000000000000A, A0000000000000000000000B); path = Resources; sourceTree = "<group>"; };
+		C00000000000000000000006 /* Tests */ = {isa = PBXGroup; children = (C00000000000000000000007 /* DarkNoiseTests */); path = Tests; sourceTree = "<group>"; };
+		C00000000000000000000007 /* DarkNoiseTests */ = {isa = PBXGroup; children = (A00000000000000000000007); path = DarkNoiseTests; sourceTree = "<group>"; };
+		C00000000000000000000008 /* Products */ = {isa = PBXGroup; children = (A0000000000000000000000C, A0000000000000000000000D, A0000000000000000000000E); name = Products; sourceTree = "<group>"; };
+		C00000000000000000000009 /* scripts */ = {isa = PBXGroup; children = (A00000000000000000000012); path = scripts; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E00000000000000000000001 /* Nullwave */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 100000000000000000000002 /* Build configuration list for PBXNativeTarget "Nullwave" */;
+			buildPhases = (D00000000000000000000002 /* Sources */, D00000000000000000000001 /* Frameworks */, D00000000000000000000003 /* Resources */);
+			buildRules = ();
+			dependencies = ();
+			name = Nullwave;
+			productName = Nullwave;
+			productReference = A0000000000000000000000C /* Nullwave.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E00000000000000000000002 /* nullwavectl */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 100000000000000000000003 /* Build configuration list for PBXNativeTarget "nullwavectl" */;
+			buildPhases = (D00000000000000000000005 /* Sources */, D00000000000000000000004 /* Frameworks */);
+			buildRules = ();
+			dependencies = ();
+			name = nullwavectl;
+			productName = nullwavectl;
+			productReference = A0000000000000000000000D /* nullwavectl */;
+			productType = "com.apple.product-type.tool";
+		};
+		E00000000000000000000003 /* NullwaveTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 100000000000000000000004 /* Build configuration list for PBXNativeTarget "NullwaveTests" */;
+			buildPhases = (D00000000000000000000007 /* Sources */, D00000000000000000000006 /* Frameworks */);
+			buildRules = ();
+			dependencies = (210000000000000000000001 /* PBXTargetDependency */);
+			name = NullwaveTests;
+			productName = NullwaveTests;
+			productReference = A0000000000000000000000E /* NullwaveTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		000000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2660;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					E00000000000000000000001 = {CreatedOnToolsVersion = 26.6; };
+					E00000000000000000000002 = {CreatedOnToolsVersion = 26.6; };
+					E00000000000000000000003 = {CreatedOnToolsVersion = 26.6; TestTargetID = E00000000000000000000001; };
+				};
+			};
+			buildConfigurationList = 100000000000000000000001 /* Build configuration list for PBXProject "Nullwave" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base);
+			mainGroup = C00000000000000000000001;
+			productRefGroup = C00000000000000000000008 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (E00000000000000000000001, E00000000000000000000002, E00000000000000000000003);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D00000000000000000000003 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000008, B00000000000000000000009, B0000000000000000000000A); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D00000000000000000000002 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000001, B00000000000000000000002, B00000000000000000000003, B00000000000000000000004, B00000000000000000000005); runOnlyForDeploymentPostprocessing = 0; };
+		D00000000000000000000005 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000006); runOnlyForDeploymentPostprocessing = 0; };
+		D00000000000000000000007 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000007); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		210000000000000000000001 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = E00000000000000000000001 /* Nullwave */; targetProxy = 200000000000000000000001 /* PBXContainerItemProxy */; };
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		F00000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; COPY_PHASE_STRIP = NO; DEBUG_INFORMATION_FORMAT = dwarf; ENABLE_TESTABILITY = YES; GCC_OPTIMIZATION_LEVEL = 0; MACOSX_DEPLOYMENT_TARGET = 14.0; ONLY_ACTIVE_ARCH = YES; SDKROOT = macosx; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
+		F00000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; COPY_PHASE_STRIP = YES; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O"; }; name = Release; };
+		F00000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = NO; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Resources/Info.plist; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.jasonlotito.nullwave; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; }; name = Debug; };
+		F00000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = NO; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Resources/Info.plist; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.jasonlotito.nullwave; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; }; name = Release; };
+		F00000000000000000000005 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_NAME = nullwavectl; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; }; name = Debug; };
+		F00000000000000000000006 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_NAME = nullwavectl; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; }; name = Release; };
+		F00000000000000000000007 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.jasonlotito.nullwave.tests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Nullwave.app/Contents/MacOS/Nullwave"; }; name = Debug; };
+		F00000000000000000000008 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.jasonlotito.nullwave.tests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Nullwave.app/Contents/MacOS/Nullwave"; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		100000000000000000000001 /* Build configuration list for PBXProject "Nullwave" */ = {isa = XCConfigurationList; buildConfigurations = (F00000000000000000000001, F00000000000000000000002); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		100000000000000000000002 /* Build configuration list for PBXNativeTarget "Nullwave" */ = {isa = XCConfigurationList; buildConfigurations = (F00000000000000000000003, F00000000000000000000004); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		100000000000000000000003 /* Build configuration list for PBXNativeTarget "nullwavectl" */ = {isa = XCConfigurationList; buildConfigurations = (F00000000000000000000005, F00000000000000000000006); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		100000000000000000000004 /* Build configuration list for PBXNativeTarget "NullwaveTests" */ = {isa = XCConfigurationList; buildConfigurations = (F00000000000000000000007, F00000000000000000000008); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = 000000000000000000000001 /* Project object */;
+}

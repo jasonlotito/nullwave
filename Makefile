@@ -1,4 +1,4 @@
-.PHONY: build test app run clean
+.PHONY: build test app run xcode-build xcode-test clean
 
 build:
 	mkdir -p .build/ModuleCache .build/swiftpm-cache
@@ -13,6 +13,12 @@ app:
 
 run: app
 	open "dist/Nullwave.app"
+
+xcode-build:
+	xcodebuild -project Nullwave.xcodeproj -scheme Nullwave -configuration Debug -derivedDataPath .build/xcode CODE_SIGNING_ALLOWED=NO build
+
+xcode-test:
+	xcodebuild -project Nullwave.xcodeproj -scheme Nullwave -configuration Debug -derivedDataPath .build/xcode CODE_SIGNING_ALLOWED=NO test
 
 clean:
 	swift package clean
