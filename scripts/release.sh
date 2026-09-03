@@ -77,9 +77,9 @@ trap 'rm -rf "$appcast_source"' EXIT
 cp "$ARCHIVE" "$appcast_source/"
 "$APPCAST_TOOL" \
     --account "$SPARKLE_ACCOUNT" \
-    --download-url-prefix "https://jasonlotito.github.io/nullwave/downloads/" \
+    --download-url-prefix "https://nullwaveapp.com/downloads/" \
     --full-release-notes-url "https://github.com/$REPOSITORY/releases/tag/$TAG" \
-    --link "https://jasonlotito.github.io/nullwave/" \
+    --link "https://nullwaveapp.com/" \
     --maximum-versions 1 \
     -o "$PWD/docs/appcast.xml" \
     "$appcast_source"
