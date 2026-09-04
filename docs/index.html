@@ -34,6 +34,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/nullwave-icon-180.png">
   <link rel="alternate" type="application/rss+xml" title="Nullwave Updates" href="https://nullwaveapp.com/appcast.xml">
   <link rel="stylesheet" href="styles.css">
+  <script src="navigation.js" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -85,7 +86,20 @@
         <a href="#sounds">Sounds</a>
         <a href="#call-mode">Call mode</a>
       </div>
-      <a class="button button-small button-ghost" href="https://github.com/jasonlotito/nullwave" rel="noreferrer">GitHub</a>
+      <a class="desktop-github button button-small button-ghost" href="https://github.com/jasonlotito/nullwave" rel="noreferrer">GitHub</a>
+      <details class="mobile-nav">
+        <summary aria-label="Open navigation menu">
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </summary>
+        <div class="mobile-nav-menu">
+          <a href="#features">Features</a>
+          <a href="#sounds">Sounds</a>
+          <a href="#call-mode">Call mode</a>
+          <a href="https://github.com/jasonlotito/nullwave" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+      </details>
     </nav>
   </header>
 
