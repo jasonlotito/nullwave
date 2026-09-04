@@ -3,15 +3,15 @@
     <channel>
         <title>Nullwave</title>
         <item>
-            <title>1.0.5</title>
-            <pubDate>Thu, 03 Sep 2026 21:46:59 -0400</pubDate>
+            <title>1.0.6</title>
+            <pubDate>Fri, 04 Sep 2026 00:31:23 -0400</pubDate>
             <link>https://nullwaveapp.com/</link>
-            <sparkle:fullReleaseNotesLink>https://github.com/jasonlotito/nullwave/releases/tag/v1.0.5</sparkle:fullReleaseNotesLink>
-            <sparkle:version>7</sparkle:version>
-            <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
+            <sparkle:fullReleaseNotesLink>https://github.com/jasonlotito/nullwave/releases/tag/v1.0.6</sparkle:fullReleaseNotesLink>
+            <sparkle:version>8</sparkle:version>
+            <sparkle:shortVersionString>1.0.6</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://nullwaveapp.com/downloads/Nullwave-1.0.5.zip" length="5514735" type="application/octet-stream" sparkle:edSignature="nna7CphqbTw3i1EmStc17AwCocgyGLGuK7vFIF1GLM5xG8mD5l8yGGt3m7wDl6rP78ev2AFjEUxuDobqwCpMBw=="/>
+            <enclosure url="https://nullwaveapp.com/downloads/Nullwave-1.0.6.zip" length="5531380" type="application/octet-stream" sparkle:edSignature="i0tjQtfbi7HRxxNKpRKX+S3d2zkqkHzdxjfLLN0agtaQfsXvxKTW7CgVJ0EOuV6+qRMT8AaBw/h9jeBGKcQNCg=="/>
         </item>
         <item>
             <title>1.0.4</title>
