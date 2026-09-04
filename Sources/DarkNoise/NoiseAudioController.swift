@@ -4,9 +4,6 @@ import AppKit
 #endif
 import Combine
 import Foundation
-#if os(iOS)
-import WidgetKit
-#endif
 
 @MainActor
 protocol NoisePlaybackControlling: AnyObject {
@@ -114,9 +111,9 @@ final class NoiseAudioController: ObservableObject {
     @Published var isOtherAudioDuckingEnabled: Bool {
         didSet {
             defaults.set(isOtherAudioDuckingEnabled, forKey: Keys.duckingEnabled)
-            generator?.setOutputVolume(
-                Float(effectiveVolume),
-                durationSeconds: isOtherAudioDuckingEnabled && isOtherAudioPlaying
+            setPlaybackVolume(
+                effectiveVolume,
+                duration: isOtherAudioDuckingEnabled && isOtherAudioPlaying
                     ? VolumeRamp.duckAttack
                     : VolumeRamp.duckRelease
             )
@@ -129,9 +126,6 @@ final class NoiseAudioController: ObservableObject {
         didSet {
             if !isChangingPreviewSound {
                 defaults.set(kind.rawValue, forKey: Keys.kind)
-#if os(iOS)
-                WidgetCenter.shared.reloadAllTimelines()
-#endif
             }
             guard oldValue != kind else { return }
             volume = storedVolume(for: kind)
@@ -149,7 +143,6 @@ final class NoiseAudioController: ObservableObject {
         static let volumePrefix = "noiseVolume."
         static let otherAudioVolumePrefix = "otherAudioVolume."
         static let duckingEnabled = "lowerVolumeWhileOtherAudioPlays"
-        static let playbackIsActive = "playbackIsActive"
     }
 
     private enum VolumeRamp {
@@ -159,9 +152,13 @@ final class NoiseAudioController: ObservableObject {
     }
 
     private let defaults: UserDefaults
+#if os(iOS)
+    private var player: AVAudioPlayer?
+#else
     private var engine = AVAudioEngine()
     private var sourceNode: AVAudioSourceNode?
     private var generator: NoiseGenerator?
+#endif
     private var fadeOutTask: Task<Void, Never>?
     private var shouldStartAfterFade = false
     private var shouldDeactivateAfterFade = true
@@ -170,6 +167,7 @@ final class NoiseAudioController: ObservableObject {
 #if os(iOS)
     private var shouldResumeAfterInterruption = false
     private var otherAudioTimer: Timer?
+    private static var cachedNoiseLoops: [NoiseKind: (sampleRate: UInt32, data: Data)] = [:]
 #endif
 
     init(defaults: UserDefaults = .standard) {
@@ -200,8 +198,7 @@ final class NoiseAudioController: ObservableObject {
             defaults.set(otherAudioVolume, forKey: Self.otherAudioVolumeKey(for: savedKind))
         }
 #if os(iOS)
-        defaults.set(false, forKey: Keys.playbackIsActive)
-        WidgetCenter.shared.reloadAllTimelines()
+        try? configureIOSAudioSessionCategory()
         startMonitoringOtherAudio()
 #endif
     }
@@ -305,9 +302,9 @@ final class NoiseAudioController: ObservableObject {
         guard isOtherAudioPlaying != otherAudioIsPlaying else { return }
         isOtherAudioPlaying = otherAudioIsPlaying
         guard isOtherAudioDuckingEnabled else { return }
-        generator?.setOutputVolume(
-            Float(effectiveVolume),
-            durationSeconds: otherAudioIsPlaying
+        setPlaybackVolume(
+            effectiveVolume,
+            duration: otherAudioIsPlaying
                 ? VolumeRamp.duckAttack
                 : VolumeRamp.duckRelease
         )
@@ -323,27 +320,24 @@ final class NoiseAudioController: ObservableObject {
 
         do {
 #if os(iOS)
-            let session = AVAudioSession.sharedInstance()
-            // Playback sessions support AirPlay implicitly. `allowAirPlay` may
-            // only be set explicitly with `playAndRecord` and returns paramErr
-            // (-50) on physical devices when combined with `playback`.
-            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-            try session.setPreferredIOBufferDuration(0.02)
-            try session.setActive(true)
+            try configureIOSAudioSessionCategory()
             refreshOtherAudioState()
-#endif
+            let preparedPlayer = try makeIOSPlayer()
+
+            try startIOSPlayer(preparedPlayer)
+#else
             try configureAndStartEngine()
+#endif
             isPlaying = true
-            savePlaybackState()
             playbackErrorMessage = nil
         } catch {
+            logPlaybackStartFailure(error)
+            discardFailedPlaybackStart()
 #if canImport(AppKit)
             NSSound.beep()
 #endif
             isPlaying = false
-            savePlaybackState()
             playbackErrorMessage = error.localizedDescription
-            NSLog("Nullwave could not start audio: %@", error.localizedDescription)
         }
     }
 
@@ -358,6 +352,20 @@ final class NoiseAudioController: ObservableObject {
     }
 
 #if os(iOS)
+    /// Configure the category early, while leaving activation deferred until
+    /// the user starts playback.
+    private func configureIOSAudioSessionCategory() throws {
+        // Playback sessions support AirPlay implicitly. `allowAirPlay` may
+        // only be set explicitly with `playAndRecord` and returns paramErr
+        // (-50) on physical devices when combined with `playback`.
+        // Long-form route sharing also cannot be combined with mixWithOthers.
+        try AVAudioSession.sharedInstance().setCategory(
+            .playback,
+            mode: .default,
+            options: [.mixWithOthers]
+        )
+    }
+
     private func startMonitoringOtherAudio() {
         refreshOtherAudioState()
         let timer = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
@@ -404,22 +412,39 @@ final class NoiseAudioController: ObservableObject {
         shouldDeactivateAfterFade = deactivateAudioSession && !startAfterFade
 
         if fadeOutTask != nil { return }
+#if os(iOS)
+        guard isPlaying, let player, player.isPlaying else {
+            stopImmediately(deactivateAudioSession: shouldDeactivateAfterFade)
+            if startAfterFade { start() }
+            return
+        }
+#else
         guard isPlaying, engine.isRunning, let generator else {
             stopImmediately(deactivateAudioSession: shouldDeactivateAfterFade)
             if startAfterFade { start() }
             return
         }
+#endif
 
         isPlaying = false
-        savePlaybackState()
+#if os(iOS)
+        player.setVolume(0, fadeDuration: NoiseGenerator.envelopeDurationSeconds)
+#else
         generator.beginFadeOut()
+#endif
         fadeOutTask = Task { [weak self] in
+#if os(iOS)
+            try? await Task.sleep(
+                nanoseconds: UInt64(NoiseGenerator.envelopeDurationSeconds * 1_000_000_000)
+            )
+#else
             // The request may arrive just after an audio buffer began. Wait
             // for the render thread to confirm silence instead of assuming a
             // wall-clock delay means the envelope has completed.
             for _ in 0..<50 where !generator.hasFinishedFadeOut {
                 try? await Task.sleep(nanoseconds: 2_000_000)
             }
+#endif
             guard let self, !Task.isCancelled else { return }
 
             let restart = self.shouldStartAfterFade
@@ -435,12 +460,16 @@ final class NoiseAudioController: ObservableObject {
         fadeOutTask = nil
         shouldStartAfterFade = false
         shouldDeactivateAfterFade = true
+#if os(iOS)
+        player?.stop()
+        player = nil
+#else
         engine.stop()
         if let sourceNode { engine.detach(sourceNode) }
         sourceNode = nil
         generator = nil
+#endif
         isPlaying = false
-        savePlaybackState()
 #if os(iOS)
         if deactivateAudioSession {
             try? AVAudioSession.sharedInstance().setActive(
@@ -448,6 +477,48 @@ final class NoiseAudioController: ObservableObject {
                 options: .notifyOthersOnDeactivation
             )
         }
+#endif
+    }
+
+    private func discardFailedPlaybackStart() {
+#if os(iOS)
+        player?.stop()
+        player = nil
+#else
+        engine.stop()
+        if let sourceNode, engine.attachedNodes.contains(sourceNode) {
+            engine.detach(sourceNode)
+        }
+        sourceNode = nil
+        generator = nil
+        engine.reset()
+#endif
+    }
+
+    private func logPlaybackStartFailure(_ error: Error) {
+        let nsError = error as NSError
+#if os(iOS)
+        let session = AVAudioSession.sharedInstance()
+        let route = session.currentRoute.outputs
+            .map { $0.portType.rawValue }
+            .joined(separator: ",")
+        NSLog(
+            "Nullwave could not start audio: %@ (domain=%@ code=%ld, category=%@, route=%@, sampleRate=%.0f, otherAudio=%@)",
+            error.localizedDescription,
+            nsError.domain,
+            nsError.code,
+            session.category.rawValue,
+            route.isEmpty ? "none" : route,
+            session.sampleRate,
+            session.isOtherAudioPlaying ? "yes" : "no"
+        )
+#else
+        NSLog(
+            "Nullwave could not start audio: %@ (domain=%@ code=%ld)",
+            error.localizedDescription,
+            nsError.domain,
+            nsError.code
+        )
 #endif
     }
 
@@ -512,16 +583,6 @@ final class NoiseAudioController: ObservableObject {
 
     private func saveFavorites() {
         defaults.set(favoriteKinds.map(\.rawValue), forKey: Keys.favorites)
-#if os(iOS)
-        WidgetCenter.shared.reloadAllTimelines()
-#endif
-    }
-
-    private func savePlaybackState() {
-        defaults.set(isPlaying, forKey: Keys.playbackIsActive)
-#if os(iOS)
-        WidgetCenter.shared.reloadAllTimelines()
-#endif
     }
 
     private static func volumeKey(for kind: NoiseKind) -> String {
@@ -547,12 +608,57 @@ final class NoiseAudioController: ObservableObject {
     private func updateRenderedVolume(forChangedSecondaryVolume: Bool) {
         let secondaryVolumeIsActive = isOtherAudioDuckingEnabled && isOtherAudioPlaying
         guard secondaryVolumeIsActive == forChangedSecondaryVolume else { return }
-        generator?.setOutputVolume(
-            Float(effectiveVolume),
-            durationSeconds: VolumeRamp.directAdjustment
-        )
+        setPlaybackVolume(effectiveVolume, duration: VolumeRamp.directAdjustment)
     }
 
+    private func setPlaybackVolume(_ volume: Double, duration: Double) {
+#if os(iOS)
+        player?.setVolume(Float(volume), fadeDuration: duration)
+#else
+        generator?.setOutputVolume(Float(volume), durationSeconds: duration)
+#endif
+    }
+
+#if os(iOS)
+    private func makeIOSPlayer() throws -> AVAudioPlayer {
+        // Keep the sound synthesized locally, then use iOS's system-managed
+        // player for stable looping and smooth volume fades.
+        let sampleRate = max(AVAudioSession.sharedInstance().sampleRate, 44_100)
+        let roundedSampleRate = UInt32(sampleRate.rounded())
+        let data: Data
+        if let cached = Self.cachedNoiseLoops[kind], cached.sampleRate == roundedSampleRate {
+            data = cached.data
+        } else {
+            data = Self.makeLoopingNoiseWAV(kind: kind, sampleRate: sampleRate)
+            Self.cachedNoiseLoops[kind] = (roundedSampleRate, data)
+        }
+        return try AVAudioPlayer(data: data, fileTypeHint: AVFileType.wav.rawValue)
+    }
+
+    private func startIOSPlayer(_ player: AVAudioPlayer) throws {
+        player.numberOfLoops = -1
+        player.volume = 0
+        guard player.prepareToPlay() else {
+            throw NSError(
+                domain: "com.jasonlotito.nullwave.audio",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "The system audio player could not prepare."]
+            )
+        }
+        guard player.play() else {
+            throw NSError(
+                domain: "com.jasonlotito.nullwave.audio",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "The system audio player could not start."]
+            )
+        }
+        self.player = player
+        player.setVolume(
+            Float(effectiveVolume),
+            fadeDuration: NoiseGenerator.envelopeDurationSeconds
+        )
+    }
+#else
     private func configureAndStartEngine() throws {
         let output = engine.outputNode
         let outputFormat = output.inputFormat(forBus: 0)
@@ -576,6 +682,90 @@ final class NoiseAudioController: ObservableObject {
         engine.prepare()
         try engine.start()
     }
+#endif
+
+#if os(iOS)
+    /// Builds a mono 16-bit PCM WAV entirely in memory. The beginning is a
+    /// crossfade from the generator's continuation back into its first
+    /// samples. That makes both sides of the repeating boundary continuous,
+    /// without a periodic drop in volume or a click.
+    private static func makeLoopingNoiseWAV(kind: NoiseKind, sampleRate: Double) -> Data {
+        let rate = UInt32(sampleRate.rounded())
+        let frameCount = Int(rate) * 30
+        let bytesPerSample = 2
+        let headerSize = 44
+        let payloadSize = frameCount * bytesPerSample
+        let crossfadeFrames = max(Int(sampleRate * NoiseGenerator.envelopeDurationSeconds), 2)
+        let generator = NoiseGenerator(
+            kind: kind,
+            sampleRate: sampleRate,
+            initialVolume: 1,
+            startsSilently: false
+        )
+        var samples = [Float]()
+        samples.reserveCapacity(frameCount + crossfadeFrames)
+        for _ in 0..<(frameCount + crossfadeFrames) {
+            samples.append(generator.nextSample())
+        }
+        var data = Data(count: headerSize + payloadSize)
+
+        data.withUnsafeMutableBytes { rawBytes in
+            let bytes = rawBytes.bindMemory(to: UInt8.self)
+
+            func writeASCII(_ string: String, at offset: Int) {
+                for (index, byte) in string.utf8.enumerated() {
+                    bytes[offset + index] = byte
+                }
+            }
+
+            func writeUInt16(_ value: UInt16, at offset: Int) {
+                bytes[offset] = UInt8(truncatingIfNeeded: value)
+                bytes[offset + 1] = UInt8(truncatingIfNeeded: value >> 8)
+            }
+
+            func writeUInt32(_ value: UInt32, at offset: Int) {
+                bytes[offset] = UInt8(truncatingIfNeeded: value)
+                bytes[offset + 1] = UInt8(truncatingIfNeeded: value >> 8)
+                bytes[offset + 2] = UInt8(truncatingIfNeeded: value >> 16)
+                bytes[offset + 3] = UInt8(truncatingIfNeeded: value >> 24)
+            }
+
+            writeASCII("RIFF", at: 0)
+            writeUInt32(UInt32(36 + payloadSize), at: 4)
+            writeASCII("WAVE", at: 8)
+            writeASCII("fmt ", at: 12)
+            writeUInt32(16, at: 16)
+            writeUInt16(1, at: 20)
+            writeUInt16(1, at: 22)
+            writeUInt32(rate, at: 24)
+            writeUInt32(rate * UInt32(bytesPerSample), at: 28)
+            writeUInt16(UInt16(bytesPerSample), at: 32)
+            writeUInt16(16, at: 34)
+            writeASCII("data", at: 36)
+            writeUInt32(UInt32(payloadSize), at: 40)
+
+            for frame in 0..<frameCount {
+                let sample: Float
+                if frame < crossfadeFrames {
+                    let mix = Float(frame) / Float(crossfadeFrames - 1)
+                    sample = samples[frameCount + frame] * (1 - mix) + samples[frame] * mix
+                } else {
+                    sample = samples[frame]
+                }
+
+                let clampedSample = min(max(sample, -1), 1)
+                let integer = Int16((clampedSample * Float(Int16.max)).rounded())
+                writeUInt16(
+                    UInt16(bitPattern: integer),
+                    at: headerSize + frame * bytesPerSample
+                )
+            }
+        }
+
+        return data
+    }
+
+#endif
 }
 
 extension NoiseAudioController: NoisePlaybackControlling {}

@@ -3,7 +3,7 @@ import Synchronization
 
 /// Stateful, allocation-free noise synthesis used directly by the audio render thread.
 final class NoiseGenerator: @unchecked Sendable {
-    static let envelopeDurationSeconds = 0.02
+    static let envelopeDurationSeconds = 0.04
 
     private let kind: NoiseKind
     private let sampleRate: Double
@@ -55,7 +55,12 @@ final class NoiseGenerator: @unchecked Sendable {
     private var pink1 = Float.zero
     private var pink2 = Float.zero
 
-    init(kind: NoiseKind, sampleRate: Double, initialVolume: Float = 1) {
+    init(
+        kind: NoiseKind,
+        sampleRate: Double,
+        initialVolume: Float = 1,
+        startsSilently: Bool = true
+    ) {
         let clampedVolume = min(max(initialVolume, 0), 1)
         let initialVolumeRequest = Self.packedVolumeRequest(
             volume: clampedVolume,
@@ -63,6 +68,7 @@ final class NoiseGenerator: @unchecked Sendable {
         )
         self.kind = kind
         self.sampleRate = sampleRate
+        envelopeGain = startsSilently ? .zero : 1
         volumeRequest = Atomic(initialVolumeRequest)
         activeVolumeRequest = initialVolumeRequest
         outputGain = clampedVolume

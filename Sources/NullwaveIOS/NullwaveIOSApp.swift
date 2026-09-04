@@ -3,7 +3,7 @@ import SwiftUI
 
 @main
 struct NullwaveIOSApp: App {
-    @StateObject private var audio = NullwaveIntentPlayback.audio
+    @StateObject private var audio = NoiseAudioController()
 
     var body: some Scene {
         WindowGroup {
