@@ -3,6 +3,12 @@ import Combine
 import Sparkle
 import SwiftUI
 
+private extension Notification.Name {
+    static let openNullwaveGeneralSettings = Notification.Name(
+        "com.jasonlotito.nullwave.open-general-settings"
+    )
+}
+
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let audio = NoiseAudioController()
@@ -240,6 +246,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         loginItem.refresh()
         commandLineTool.refresh()
+        NotificationCenter.default.post(name: .openNullwaveGeneralSettings, object: nil)
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
@@ -540,7 +547,7 @@ private struct FullSettingsView: View {
         self.commandLineTool = commandLineTool
         self.checkForUpdates = checkForUpdates
         self.quit = quit
-        _selection = State(initialValue: .sound(audio.kind))
+        _selection = State(initialValue: .general)
     }
 
     var body: some View {
@@ -579,6 +586,9 @@ private struct FullSettingsView: View {
         .frame(minWidth: 760, minHeight: 540)
         .onChange(of: selection) { _, _ in
             audio.stopPreview()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openNullwaveGeneralSettings)) { _ in
+            selection = .general
         }
         .onDisappear { audio.stopPreview() }
     }
