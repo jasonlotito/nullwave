@@ -4,6 +4,9 @@ import AppKit
 #endif
 import Combine
 import Foundation
+#if os(iOS)
+import WidgetKit
+#endif
 
 @MainActor
 protocol NoisePlaybackControlling: AnyObject {
@@ -126,6 +129,9 @@ final class NoiseAudioController: ObservableObject {
         didSet {
             if !isChangingPreviewSound {
                 defaults.set(kind.rawValue, forKey: Keys.kind)
+#if os(iOS)
+                WidgetCenter.shared.reloadAllTimelines()
+#endif
             }
             guard oldValue != kind else { return }
             volume = storedVolume(for: kind)
@@ -143,6 +149,7 @@ final class NoiseAudioController: ObservableObject {
         static let volumePrefix = "noiseVolume."
         static let otherAudioVolumePrefix = "otherAudioVolume."
         static let duckingEnabled = "lowerVolumeWhileOtherAudioPlays"
+        static let playbackIsActive = "playbackIsActive"
     }
 
     private enum VolumeRamp {
@@ -193,6 +200,8 @@ final class NoiseAudioController: ObservableObject {
             defaults.set(otherAudioVolume, forKey: Self.otherAudioVolumeKey(for: savedKind))
         }
 #if os(iOS)
+        defaults.set(false, forKey: Keys.playbackIsActive)
+        WidgetCenter.shared.reloadAllTimelines()
         startMonitoringOtherAudio()
 #endif
     }
@@ -325,12 +334,14 @@ final class NoiseAudioController: ObservableObject {
 #endif
             try configureAndStartEngine()
             isPlaying = true
+            savePlaybackState()
             playbackErrorMessage = nil
         } catch {
 #if canImport(AppKit)
             NSSound.beep()
 #endif
             isPlaying = false
+            savePlaybackState()
             playbackErrorMessage = error.localizedDescription
             NSLog("Nullwave could not start audio: %@", error.localizedDescription)
         }
@@ -400,6 +411,7 @@ final class NoiseAudioController: ObservableObject {
         }
 
         isPlaying = false
+        savePlaybackState()
         generator.beginFadeOut()
         fadeOutTask = Task { [weak self] in
             // The request may arrive just after an audio buffer began. Wait
@@ -428,6 +440,7 @@ final class NoiseAudioController: ObservableObject {
         sourceNode = nil
         generator = nil
         isPlaying = false
+        savePlaybackState()
 #if os(iOS)
         if deactivateAudioSession {
             try? AVAudioSession.sharedInstance().setActive(
@@ -499,6 +512,16 @@ final class NoiseAudioController: ObservableObject {
 
     private func saveFavorites() {
         defaults.set(favoriteKinds.map(\.rawValue), forKey: Keys.favorites)
+#if os(iOS)
+        WidgetCenter.shared.reloadAllTimelines()
+#endif
+    }
+
+    private func savePlaybackState() {
+        defaults.set(isPlaying, forKey: Keys.playbackIsActive)
+#if os(iOS)
+        WidgetCenter.shared.reloadAllTimelines()
+#endif
     }
 
     private static func volumeKey(for kind: NoiseKind) -> String {

@@ -107,6 +107,12 @@ interruptions and stops safely if headphones are disconnected.
 Nullwave does not register itself as the device's Now Playing app, so the other
 media app retains its Lock Screen and Control Center playback controls.
 
+On iOS 18 or newer, add **Play or Stop Nullwave** from the Control Center
+controls gallery for a one-tap playback toggle. The same control is available
+for the Lock Screen and Action button. The **Nullwave Controls** widget supports
+the smallest Home Screen size with buttons for all three favorites plus a
+play/stop toggle, and its circular Lock Screen size provides the toggle alone.
+
 ## Command-line control
 
 The build also creates `dist/nullwavectl`. It controls an existing Nullwave

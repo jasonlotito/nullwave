@@ -36,7 +36,7 @@ xcode-test:
 	xcodebuild -project Nullwave.xcodeproj -scheme Nullwave -configuration Debug -derivedDataPath .build/xcode CODE_SIGNING_ALLOWED=NO test
 
 ios-build:
-	xcodebuild -project Nullwave.xcodeproj -scheme "Nullwave iOS" -configuration Debug -destination "generic/platform=iOS Simulator" -derivedDataPath .build/xcode-ios CODE_SIGNING_ALLOWED=NO build
+	xcodebuild -project Nullwave.xcodeproj -scheme "Nullwave iOS" -configuration Debug -destination "generic/platform=iOS Simulator" -derivedDataPath .build/xcode-ios build
 
 clean:
 	swift package clean
