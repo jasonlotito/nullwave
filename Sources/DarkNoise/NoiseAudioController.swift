@@ -108,7 +108,7 @@ final class NoiseAudioController: ObservableObject {
             }
             guard oldValue != kind else { return }
             volume = storedVolume(for: kind)
-            if isPlaying { restart() }
+            if playbackIsRequested { restart() }
         }
     }
 
@@ -125,6 +125,9 @@ final class NoiseAudioController: ObservableObject {
     private var engine = AVAudioEngine()
     private var sourceNode: AVAudioSourceNode?
     private var generator: NoiseGenerator?
+    private var fadeOutTask: Task<Void, Never>?
+    private var shouldStartAfterFade = false
+    private var shouldDeactivateAfterFade = true
     private var previewOrigin: (kind: NoiseKind, wasPlaying: Bool)?
     private var isChangingPreviewSound = false
 #if os(iOS)
@@ -140,6 +143,10 @@ final class NoiseAudioController: ObservableObject {
         if defaults.object(forKey: Self.volumeKey(for: savedKind)) == nil {
             defaults.set(volume, forKey: Self.volumeKey(for: savedKind))
         }
+    }
+
+    private var playbackIsRequested: Bool {
+        isPlaying || shouldStartAfterFade
     }
 
     func setFavorite(at index: Int, to newKind: NoiseKind) {
@@ -185,7 +192,7 @@ final class NoiseAudioController: ObservableObject {
             return
         }
         stopPreview()
-        previewOrigin = (self.kind, isPlaying)
+        previewOrigin = (self.kind, playbackIsRequested)
         stop()
         isChangingPreviewSound = true
         self.kind = kind
@@ -221,6 +228,12 @@ final class NoiseAudioController: ObservableObject {
 
     func start() {
         guard !isPlaying else { return }
+        if fadeOutTask != nil {
+            shouldStartAfterFade = true
+            shouldDeactivateAfterFade = false
+            return
+        }
+
         do {
 #if os(iOS)
             let session = AVAudioSession.sharedInstance()
@@ -245,7 +258,13 @@ final class NoiseAudioController: ObservableObject {
     }
 
     func stop() {
-        stop(deactivateAudioSession: true)
+        beginFadeOut(deactivateAudioSession: true, startAfterFade: false)
+    }
+
+    /// Used when the process or output route is going away and no audible
+    /// fade can reliably finish.
+    func shutdown() {
+        stopImmediately(deactivateAudioSession: true)
     }
 
 #if os(iOS)
@@ -255,8 +274,8 @@ final class NoiseAudioController: ObservableObject {
 
         switch type {
         case .began:
-            shouldResumeAfterInterruption = isPlaying
-            stop(deactivateAudioSession: false)
+            shouldResumeAfterInterruption = playbackIsRequested
+            stopImmediately(deactivateAudioSession: false)
         case .ended:
             let rawOptions = notification.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
             let options = AVAudioSession.InterruptionOptions(rawValue: rawOptions)
@@ -273,11 +292,45 @@ final class NoiseAudioController: ObservableObject {
               AVAudioSession.RouteChangeReason(rawValue: rawReason) == .oldDeviceUnavailable else {
             return
         }
-        stop()
+        stopImmediately(deactivateAudioSession: true)
     }
 #endif
 
-    private func stop(deactivateAudioSession: Bool) {
+    private func beginFadeOut(deactivateAudioSession: Bool, startAfterFade: Bool) {
+        shouldStartAfterFade = startAfterFade
+        shouldDeactivateAfterFade = deactivateAudioSession && !startAfterFade
+
+        if fadeOutTask != nil { return }
+        guard isPlaying, engine.isRunning, let generator else {
+            stopImmediately(deactivateAudioSession: shouldDeactivateAfterFade)
+            if startAfterFade { start() }
+            return
+        }
+
+        isPlaying = false
+        generator.beginFadeOut()
+        fadeOutTask = Task { [weak self] in
+            // The request may arrive just after an audio buffer began. Wait
+            // for the render thread to confirm silence instead of assuming a
+            // wall-clock delay means the envelope has completed.
+            for _ in 0..<50 where !generator.hasFinishedFadeOut {
+                try? await Task.sleep(nanoseconds: 2_000_000)
+            }
+            guard let self, !Task.isCancelled else { return }
+
+            let restart = self.shouldStartAfterFade
+            let deactivate = self.shouldDeactivateAfterFade && !restart
+            self.fadeOutTask = nil
+            self.stopImmediately(deactivateAudioSession: deactivate)
+            if restart { self.start() }
+        }
+    }
+
+    private func stopImmediately(deactivateAudioSession: Bool) {
+        fadeOutTask?.cancel()
+        fadeOutTask = nil
+        shouldStartAfterFade = false
+        shouldDeactivateAfterFade = true
         engine.stop()
         if let sourceNode { engine.detach(sourceNode) }
         sourceNode = nil
@@ -294,8 +347,7 @@ final class NoiseAudioController: ObservableObject {
     }
 
     private func restart() {
-        stop()
-        start()
+        beginFadeOut(deactivateAudioSession: false, startAfterFade: true)
     }
 
     private func storedVolume(for kind: NoiseKind) -> Double {

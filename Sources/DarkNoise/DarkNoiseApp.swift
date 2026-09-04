@@ -106,7 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        audio.stop()
+        audio.shutdown()
         callActivity.stopMonitoring()
         if let eventMonitor { NSEvent.removeMonitor(eventMonitor) }
         if let commandObserver {

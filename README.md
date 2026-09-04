@@ -37,7 +37,7 @@ keyboard focus to the macOS menu bar and reach the Nullwave status item.
 
 ## Build and run
 
-Requires macOS 14 or newer and Xcode 16 or newer.
+Requires macOS 15 or newer and Xcode 16 or newer.
 
 ```sh
 make run
@@ -87,7 +87,7 @@ noise type and volume automatically.
 
 ## iOS app
 
-The separate native SwiftUI app requires iOS 17 or newer. Open the shared
+The separate native SwiftUI app requires iOS 18 or newer. Open the shared
 `Nullwave iOS` scheme in Xcode, or build it for the Simulator from the command
 line:
 

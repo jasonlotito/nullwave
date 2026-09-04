@@ -25,6 +25,21 @@ struct NoiseGeneratorTests {
         }
     }
 
+    @Test func fadeOutReachesSilenceBeforeTheGeneratorStops() {
+        let sampleRate = 48_000.0
+        let generator = NoiseGenerator(kind: .white, sampleRate: sampleRate)
+        let envelopeFrames = Int(sampleRate * NoiseGenerator.envelopeDurationSeconds)
+
+        for _ in 0..<envelopeFrames { _ = generator.nextSample() }
+        generator.beginFadeOut()
+        #expect(!generator.hasFinishedFadeOut)
+
+        for _ in 0..<envelopeFrames { _ = generator.nextSample() }
+
+        #expect(generator.hasFinishedFadeOut)
+        #expect(generator.nextSample() == 0)
+    }
+
     @Test func continuousSoundsAvoidIsolatedLargeSampleSteps() {
         let continuousKinds: [NoiseKind] = [.dark, .brown, .deep, .fan, .cabin, .ocean]
 

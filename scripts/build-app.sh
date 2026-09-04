@@ -22,7 +22,7 @@ cp Resources/MenuBarIcon.png "$CONTENTS/Resources/MenuBarIcon.png"
 xcrun actool Resources/Assets.xcassets \
     --compile "$CONTENTS/Resources" \
     --platform macosx \
-    --minimum-deployment-target 14.0 \
+    --minimum-deployment-target 15.0 \
     --app-icon AppIcon \
     --output-partial-info-plist .build/AppIcon-partial.plist
 

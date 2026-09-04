@@ -1,7 +1,10 @@
 import AVFoundation
+import Synchronization
 
 /// Stateful, allocation-free noise synthesis used directly by the audio render thread.
 final class NoiseGenerator: @unchecked Sendable {
+    static let envelopeDurationSeconds = 0.02
+
     private let kind: NoiseKind
     private let sampleRate: Double
     private let darkFirstAlpha: Float
@@ -16,9 +19,12 @@ final class NoiseGenerator: @unchecked Sendable {
     private let cabinRumbleAlpha: Float
     private let oceanBodyAlpha: Float
     private let oceanLowerAlpha: Float
-    private let startupGainStep: Float
+    private let envelopeGainStep: Float
+    private let fadeOutRequested = Atomic(false)
+    private let fadeOutCompleted = Atomic(false)
     private var randomState: UInt64 = 0x4d595df4d0f33173
-    private var startupGain = Float.zero
+    private var envelopeGain = Float.zero
+    private var isFadingOut = false
 
     private var brown = Float.zero
     private var darkLow = Float.zero
@@ -58,7 +64,7 @@ final class NoiseGenerator: @unchecked Sendable {
         cabinRumbleAlpha = Self.lowPassAlpha(cutoff: 75, sampleRate: sampleRate)
         oceanBodyAlpha = Self.lowPassAlpha(cutoff: 420, sampleRate: sampleRate)
         oceanLowerAlpha = Self.lowPassAlpha(cutoff: 95, sampleRate: sampleRate)
-        startupGainStep = Float(1 / max(sampleRate * 0.02, 1))
+        envelopeGainStep = Float(1 / max(sampleRate * Self.envelopeDurationSeconds, 1))
     }
 
     /// Constructs the Core Audio callback outside the main-actor-isolated
@@ -73,9 +79,10 @@ final class NoiseGenerator: @unchecked Sendable {
     func render(frameCount: AVAudioFrameCount, into audioBufferList: UnsafeMutablePointer<AudioBufferList>) {
         let buffers = UnsafeMutableAudioBufferListPointer(audioBufferList)
         guard !buffers.isEmpty else { return }
+        updateFadeOutState()
 
         for frame in 0..<Int(frameCount) {
-            let sample = nextSample()
+            let sample = nextSample(checkForFadeOut: false)
             for buffer in buffers {
                 guard let data = buffer.mData else { continue }
                 data.assumingMemoryBound(to: Float.self)[frame] = sample
@@ -83,11 +90,40 @@ final class NoiseGenerator: @unchecked Sendable {
         }
     }
 
+    /// Requests a sample-ramped fade on the render thread. Atomics keep the
+    /// UI thread from locking or mutating render-owned envelope state.
+    func beginFadeOut() {
+        fadeOutRequested.store(true, ordering: .releasing)
+    }
+
+    var hasFinishedFadeOut: Bool {
+        fadeOutCompleted.load(ordering: .acquiring)
+    }
+
     func nextSample() -> Float {
+        nextSample(checkForFadeOut: true)
+    }
+
+    private func nextSample(checkForFadeOut: Bool) -> Float {
+        if checkForFadeOut { updateFadeOutState() }
+        guard !isFadingOut || envelopeGain > 0 else { return 0 }
+
         let sample = generateSample()
-        guard startupGain < 1 else { return sample }
-        startupGain = min(startupGain + startupGainStep, 1)
-        return sample * startupGain
+        if isFadingOut {
+            envelopeGain = max(envelopeGain - envelopeGainStep, 0)
+            if envelopeGain == 0 {
+                fadeOutCompleted.store(true, ordering: .releasing)
+            }
+        } else if envelopeGain < 1 {
+            envelopeGain = min(envelopeGain + envelopeGainStep, 1)
+        }
+        return sample * envelopeGain
+    }
+
+    private func updateFadeOutState() {
+        if !isFadingOut, fadeOutRequested.load(ordering: .acquiring) {
+            isFadingOut = true
+        }
     }
 
     private func generateSample() -> Float {

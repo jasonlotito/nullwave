@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "Nullwave",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v15)],
     products: [
         .executable(name: "Nullwave", targets: ["Nullwave"]),
         .executable(name: "nullwavectl", targets: ["NullwaveCLI"])
