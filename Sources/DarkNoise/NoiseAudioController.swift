@@ -94,12 +94,33 @@ final class NoiseAudioController: ObservableObject {
         didSet {
             let clamped = min(max(volume, 0), 1)
             if volume != clamped { volume = clamped }
-            if isPlaying {
-                engine.mainMixerNode.outputVolume = Float(clamped)
-            }
+            updateRenderedVolume(forChangedSecondaryVolume: false)
             defaults.set(clamped, forKey: volumeKey(for: kind))
         }
     }
+
+    @Published var otherAudioVolume: Double {
+        didSet {
+            let clamped = min(max(otherAudioVolume, 0), 1)
+            if otherAudioVolume != clamped { otherAudioVolume = clamped }
+            updateRenderedVolume(forChangedSecondaryVolume: true)
+            defaults.set(clamped, forKey: otherAudioVolumeKey(for: kind))
+        }
+    }
+
+    @Published var isOtherAudioDuckingEnabled: Bool {
+        didSet {
+            defaults.set(isOtherAudioDuckingEnabled, forKey: Keys.duckingEnabled)
+            generator?.setOutputVolume(
+                Float(effectiveVolume),
+                durationSeconds: isOtherAudioDuckingEnabled && isOtherAudioPlaying
+                    ? VolumeRamp.duckAttack
+                    : VolumeRamp.duckRelease
+            )
+        }
+    }
+
+    @Published private(set) var isOtherAudioPlaying = false
 
     @Published var kind: NoiseKind {
         didSet {
@@ -108,6 +129,7 @@ final class NoiseAudioController: ObservableObject {
             }
             guard oldValue != kind else { return }
             volume = storedVolume(for: kind)
+            otherAudioVolume = storedOtherAudioVolume(for: kind)
             if playbackIsRequested { restart() }
         }
     }
@@ -119,6 +141,14 @@ final class NoiseAudioController: ObservableObject {
         static let kind = "noiseKind"
         static let favorites = "favoriteNoiseKinds"
         static let volumePrefix = "noiseVolume."
+        static let otherAudioVolumePrefix = "otherAudioVolume."
+        static let duckingEnabled = "lowerVolumeWhileOtherAudioPlays"
+    }
+
+    private enum VolumeRamp {
+        static let directAdjustment = 0.02
+        static let duckAttack = 0.20
+        static let duckRelease = 0.40
     }
 
     private let defaults: UserDefaults
@@ -132,17 +162,39 @@ final class NoiseAudioController: ObservableObject {
     private var isChangingPreviewSound = false
 #if os(iOS)
     private var shouldResumeAfterInterruption = false
+    private var otherAudioTimer: Timer?
 #endif
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         let savedKind = NoiseKind(rawValue: defaults.string(forKey: Keys.kind) ?? "") ?? .dark
+        let savedVolume = Self.readVolume(
+            for: savedKind,
+            defaults: defaults,
+            useLegacyValue: true
+        )
         kind = savedKind
-        volume = Self.readVolume(for: savedKind, defaults: defaults, useLegacyValue: true)
+        volume = savedVolume
+        otherAudioVolume = Self.readOtherAudioVolume(
+            for: savedKind,
+            defaults: defaults,
+            fallback: savedVolume
+        )
+#if os(iOS)
+        isOtherAudioDuckingEnabled = true
+#else
+        isOtherAudioDuckingEnabled = defaults.bool(forKey: Keys.duckingEnabled)
+#endif
         favoriteKinds = Self.readFavorites(defaults: defaults)
         if defaults.object(forKey: Self.volumeKey(for: savedKind)) == nil {
             defaults.set(volume, forKey: Self.volumeKey(for: savedKind))
         }
+        if defaults.object(forKey: Self.otherAudioVolumeKey(for: savedKind)) == nil {
+            defaults.set(otherAudioVolume, forKey: Self.otherAudioVolumeKey(for: savedKind))
+        }
+#if os(iOS)
+        startMonitoringOtherAudio()
+#endif
     }
 
     private var playbackIsRequested: Bool {
@@ -226,6 +278,32 @@ final class NoiseAudioController: ObservableObject {
         }
     }
 
+    func savedOtherAudioVolume(for kind: NoiseKind) -> Double {
+        kind == self.kind ? otherAudioVolume : storedOtherAudioVolume(for: kind)
+    }
+
+    func setSavedOtherAudioVolume(_ newVolume: Double, for kind: NoiseKind) {
+        let clamped = min(max(newVolume, 0), 1)
+        if kind == self.kind {
+            otherAudioVolume = clamped
+        } else {
+            objectWillChange.send()
+            defaults.set(clamped, forKey: otherAudioVolumeKey(for: kind))
+        }
+    }
+
+    func updateOtherAudioPlaying(_ otherAudioIsPlaying: Bool) {
+        guard isOtherAudioPlaying != otherAudioIsPlaying else { return }
+        isOtherAudioPlaying = otherAudioIsPlaying
+        guard isOtherAudioDuckingEnabled else { return }
+        generator?.setOutputVolume(
+            Float(effectiveVolume),
+            durationSeconds: otherAudioIsPlaying
+                ? VolumeRamp.duckAttack
+                : VolumeRamp.duckRelease
+        )
+    }
+
     func start() {
         guard !isPlaying else { return }
         if fadeOutTask != nil {
@@ -243,6 +321,7 @@ final class NoiseAudioController: ObservableObject {
             try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try session.setPreferredIOBufferDuration(0.02)
             try session.setActive(true)
+            refreshOtherAudioState()
 #endif
             try configureAndStartEngine()
             isPlaying = true
@@ -268,6 +347,19 @@ final class NoiseAudioController: ObservableObject {
     }
 
 #if os(iOS)
+    private func startMonitoringOtherAudio() {
+        refreshOtherAudioState()
+        let timer = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.refreshOtherAudioState() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        otherAudioTimer = timer
+    }
+
+    func refreshOtherAudioState() {
+        updateOtherAudioPlaying(AVAudioSession.sharedInstance().isOtherAudioPlaying)
+    }
+
     func handleAudioSessionInterruption(_ notification: Notification) {
         guard let rawType = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
               let type = AVAudioSession.InterruptionType(rawValue: rawType) else { return }
@@ -354,6 +446,14 @@ final class NoiseAudioController: ObservableObject {
         Self.readVolume(for: kind, defaults: defaults, useLegacyValue: false)
     }
 
+    private func storedOtherAudioVolume(for kind: NoiseKind) -> Double {
+        Self.readOtherAudioVolume(
+            for: kind,
+            defaults: defaults,
+            fallback: storedVolume(for: kind)
+        )
+    }
+
     private static func readVolume(
         for kind: NoiseKind,
         defaults: UserDefaults,
@@ -367,6 +467,20 @@ final class NoiseAudioController: ObservableObject {
             return min(max(defaults.double(forKey: Keys.legacyVolume), 0), 1)
         }
         return 0.30
+    }
+
+    private static func readOtherAudioVolume(
+        for kind: NoiseKind,
+        defaults: UserDefaults,
+        fallback: Double
+    ) -> Double {
+        let key = otherAudioVolumeKey(for: kind)
+        if defaults.object(forKey: key) != nil {
+            return min(max(defaults.double(forKey: key), 0), 1)
+        }
+        // Preserve an existing user's current loudness until they choose a
+        // separate ducked volume. New installs still begin at 30% / 30%.
+        return fallback
     }
 
     private static func readFavorites(defaults: UserDefaults) -> [NoiseKind] {
@@ -391,8 +505,29 @@ final class NoiseAudioController: ObservableObject {
         Keys.volumePrefix + kind.rawValue
     }
 
+    private static func otherAudioVolumeKey(for kind: NoiseKind) -> String {
+        Keys.otherAudioVolumePrefix + kind.rawValue
+    }
+
     private func volumeKey(for kind: NoiseKind) -> String {
         Self.volumeKey(for: kind)
+    }
+
+    private func otherAudioVolumeKey(for kind: NoiseKind) -> String {
+        Self.otherAudioVolumeKey(for: kind)
+    }
+
+    private var effectiveVolume: Double {
+        isOtherAudioDuckingEnabled && isOtherAudioPlaying ? otherAudioVolume : volume
+    }
+
+    private func updateRenderedVolume(forChangedSecondaryVolume: Bool) {
+        let secondaryVolumeIsActive = isOtherAudioDuckingEnabled && isOtherAudioPlaying
+        guard secondaryVolumeIsActive == forChangedSecondaryVolume else { return }
+        generator?.setOutputVolume(
+            Float(effectiveVolume),
+            durationSeconds: VolumeRamp.directAdjustment
+        )
     }
 
     private func configureAndStartEngine() throws {
@@ -403,14 +538,18 @@ final class NoiseAudioController: ObservableObject {
             channels: max(outputFormat.channelCount, 1)
         )!
 
-        let generator = NoiseGenerator(kind: kind, sampleRate: outputFormat.sampleRate)
+        let generator = NoiseGenerator(
+            kind: kind,
+            sampleRate: outputFormat.sampleRate,
+            initialVolume: Float(effectiveVolume)
+        )
         let source = generator.makeSourceNode(format: renderFormat)
 
         self.generator = generator
         self.sourceNode = source
         engine.attach(source)
         engine.connect(source, to: engine.mainMixerNode, format: renderFormat)
-        engine.mainMixerNode.outputVolume = Float(volume)
+        engine.mainMixerNode.outputVolume = 1
         engine.prepare()
         try engine.start()
     }

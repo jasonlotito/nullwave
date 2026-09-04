@@ -20,6 +20,11 @@ struct NullwaveIOSApp: App {
                 )) { notification in
                     audio.handleAudioRouteChange(notification)
                 }
+                .onReceive(NotificationCenter.default.publisher(
+                    for: AVAudioSession.silenceSecondaryAudioHintNotification
+                )) { _ in
+                    audio.refreshOtherAudioState()
+                }
         }
     }
 }
@@ -47,7 +52,7 @@ private struct ListenView: View {
     var body: some View {
         NavigationStack {
             GeometryReader { geometry in
-                let compact = geometry.size.height < 620
+                let compact = geometry.size.height < 760
                 let landscape = geometry.size.width > geometry.size.height
                 ScrollView {
                     listenContent(compact: compact, landscape: landscape)
@@ -102,7 +107,7 @@ private struct ListenView: View {
             VStack(spacing: 2) {
                 Text(audio.kind.displayName)
                     .font(.system(compact ? .title : .largeTitle, design: .rounded, weight: .bold))
-                Text(audio.isPlaying ? "Playing with other audio" : "Ready to play")
+                Text(playbackDescription)
                     .font(compact ? .subheadline : .body)
                     .foregroundStyle(Color.nullwaveMuted)
             }
@@ -183,28 +188,53 @@ private struct ListenView: View {
     }
 
     private func volumeControl(compact: Bool) -> some View {
-        VStack(alignment: .leading, spacing: compact ? 6 : 11) {
+        VStack(alignment: .leading, spacing: compact ? 9 : 13) {
+            volumeSlider(
+                title: "Volume",
+                value: $audio.volume,
+                hint: "Adjusts Nullwave when no other audio is playing.",
+                compact: compact
+            )
+
+            Divider().overlay(Color.nullwaveLine)
+
+            volumeSlider(
+                title: "Volume while other audio is playing",
+                value: $audio.otherAudioVolume,
+                hint: "Adjusts Nullwave while another app is playing audio.",
+                compact: compact
+            )
+        }
+        .padding(compact ? 12 : 17)
+        .nullwavePanel(cornerRadius: 22)
+    }
+
+    private func volumeSlider(
+        title: String,
+        value: Binding<Double>,
+        hint: String,
+        compact: Bool
+    ) -> some View {
+        VStack(alignment: .leading, spacing: compact ? 5 : 9) {
             HStack {
-                Text("Nullwave volume")
-                    .font(.headline)
+                Text(title)
+                    .font(compact ? .subheadline.weight(.semibold) : .headline)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 Spacer()
-                Text("\(volumePercent)%")
+                Text("\(Int((value.wrappedValue * 100).rounded()))%")
                     .monospacedDigit()
                     .foregroundStyle(Color.nullwaveMuted)
             }
             HStack(spacing: 12) {
-                Image(systemName: "speaker.fill")
-                    .accessibilityHidden(true)
-                Slider(value: $audio.volume, in: 0...1, step: 0.01)
-                    .accessibilityLabel("Nullwave volume")
-                    .accessibilityValue("\(volumePercent) percent")
-                    .accessibilityHint("Adjusts Nullwave independently of the iPhone and other apps.")
-                Image(systemName: "speaker.wave.3.fill")
-                    .accessibilityHidden(true)
+                Image(systemName: "speaker.fill").accessibilityHidden(true)
+                Slider(value: value, in: 0...1, step: 0.01)
+                    .accessibilityLabel(title)
+                    .accessibilityValue("\(Int((value.wrappedValue * 100).rounded())) percent")
+                    .accessibilityHint(hint)
+                Image(systemName: "speaker.wave.3.fill").accessibilityHidden(true)
             }
         }
-        .padding(compact ? 12 : 17)
-        .nullwavePanel(cornerRadius: 22)
     }
 
     private var mixingNotice: some View {
@@ -218,7 +248,10 @@ private struct ListenView: View {
         .padding(.horizontal, 6)
     }
 
-    private var volumePercent: Int { Int((audio.volume * 100).rounded()) }
+    private var playbackDescription: String {
+        if audio.isPlaying && audio.isOtherAudioPlaying { return "Other audio detected" }
+        return audio.isPlaying ? "Playing" : "Ready to play"
+    }
 }
 
 private struct SoundLibraryView: View {
@@ -334,9 +367,9 @@ private struct SoundDetailView: View {
     }
 
     private var savedVolume: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("Saved volume").font(.headline)
+                Text("Volume").font(.headline)
                 Spacer()
                 Text("\(savedVolumePercent)%")
                     .monospacedDigit()
@@ -353,7 +386,27 @@ private struct SoundDetailView: View {
                 : "Remembers the volume without changing another sound currently playing.")
             Text(audio.previewKind == kind
                 ? "This adjusts the preview and is remembered for next time."
-                : "Each sound keeps its own volume independently.")
+                : "Used when no other audio is playing.")
+                .font(.footnote)
+                .foregroundStyle(Color.nullwaveMuted)
+
+            Divider().overlay(Color.nullwaveLine)
+
+            HStack {
+                Text("Volume while other audio is playing").font(.headline)
+                Spacer()
+                Text("\(savedOtherAudioVolumePercent)%")
+                    .monospacedDigit()
+                    .foregroundStyle(Color.nullwaveMuted)
+            }
+            Slider(value: Binding(
+                get: { audio.savedOtherAudioVolume(for: kind) },
+                set: { audio.setSavedOtherAudioVolume($0, for: kind) }
+            ), in: 0...1, step: 0.01)
+            .accessibilityLabel("Volume for \(kind.displayName) while other audio is playing")
+            .accessibilityValue("\(savedOtherAudioVolumePercent) percent")
+            .accessibilityHint("Remembers the volume used when another app is playing audio.")
+            Text("Moves to this level over 200 milliseconds, then returns to normal over 400 milliseconds.")
                 .font(.footnote)
                 .foregroundStyle(Color.nullwaveMuted)
         }
@@ -396,6 +449,10 @@ private struct SoundDetailView: View {
 
     private var savedVolumePercent: Int {
         Int((audio.savedVolume(for: kind) * 100).rounded())
+    }
+
+    private var savedOtherAudioVolumePercent: Int {
+        Int((audio.savedOtherAudioVolume(for: kind) * 100).rounded())
     }
 
     private var favoriteSlot: Int? { audio.favoriteKinds.firstIndex(of: kind) }

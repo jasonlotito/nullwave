@@ -7,6 +7,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let audio = NoiseAudioController()
     private lazy var callActivity = CallActivityController(audio: audio)
+    private lazy var otherAudioActivity = OtherAudioActivityController(audio: audio)
     private let loginItem = LaunchAtLoginController()
     private let commandLineTool = CommandLineToolInstaller()
     private let updaterController = SPUStandardUpdaterController(
@@ -19,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var settingsWindow: NSWindow?
     private var eventMonitor: Any?
     private var playbackObserver: AnyCancellable?
+    private var duckingPreferenceObserver: AnyCancellable?
     private var commandObserver: NSObjectProtocol?
     private var playbackMenuItem: NSMenuItem?
 
@@ -51,7 +53,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         popover = NSPopover()
         popover.behavior = .transient
         updatePopoverAnimationPreference()
-        popover.contentSize = NSSize(width: 320, height: 230)
+        popover.contentSize = quickControlsSize
         popover.contentViewController = NSHostingController(
             rootView: QuickControlsView(
                 audio: audio,
@@ -59,6 +61,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 openSettings: { [weak self] in self?.showSettingsWindow() }
             )
         )
+
+        duckingPreferenceObserver = audio.$isOtherAudioDuckingEnabled
+            .dropFirst()
+            .sink { [weak self] _ in
+                Task { @MainActor in self?.popover.contentSize = self?.quickControlsSize ?? .zero }
+            }
 
         if !UserDefaults.standard.bool(forKey: "hasShownWelcome") {
             UserDefaults.standard.set(true, forKey: "hasShownWelcome")
@@ -90,6 +98,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
 
         callActivity.startMonitoring()
+        otherAudioActivity.startMonitoring()
 
         if CommandLine.arguments.contains("--enable-launch-at-login")
             || CommandLine.arguments.contains("--resume-playback") {
@@ -108,6 +117,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         audio.shutdown()
         callActivity.stopMonitoring()
+        otherAudioActivity.stopMonitoring()
         if let eventMonitor { NSEvent.removeMonitor(eventMonitor) }
         if let commandObserver {
             DistributedNotificationCenter.default().removeObserver(commandObserver)
@@ -250,6 +260,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         playbackMenuItem?.title = audio.isPlaying ? "Stop Nullwave" : "Play Nullwave"
     }
 
+    private var quickControlsSize: NSSize {
+        NSSize(width: 320, height: audio.isOtherAudioDuckingEnabled ? 300 : 230)
+    }
+
     private func menuBarIcon() -> NSImage? {
         guard let url = Bundle.main.url(forResource: "MenuBarIcon", withExtension: "png"),
               let image = NSImage(contentsOf: url) else {
@@ -274,6 +288,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         case "volume":
             if let numberValue {
                 audio.volume = numberValue
+            }
+        case "other-volume":
+            if let numberValue {
+                audio.otherAudioVolume = numberValue
             }
         case "noise":
             if let stringValue,
@@ -430,24 +448,18 @@ private struct QuickControlsView: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Volume").font(.caption).foregroundStyle(.secondary)
-                    Spacer()
-                    Text("\(Int(audio.volume * 100))%")
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-                HStack {
-                    Image(systemName: "speaker.fill")
-                        .accessibilityHidden(true)
-                    Slider(value: $audio.volume, in: 0...1)
-                        .accessibilityLabel("Noise volume")
-                        .accessibilityValue("\(Int(audio.volume * 100)) percent")
-                        .accessibilityHint("Adjusts Nullwave without changing the Mac system volume.")
-                    Image(systemName: "speaker.wave.3.fill")
-                        .accessibilityHidden(true)
-                }
+            quickVolumeControl(
+                title: "Volume",
+                value: $audio.volume,
+                accessibilityHint: "Adjusts Nullwave when no other audio is playing."
+            )
+
+            if audio.isOtherAudioDuckingEnabled {
+                quickVolumeControl(
+                    title: "Volume while other audio is playing",
+                    value: $audio.otherAudioVolume,
+                    accessibilityHint: "Adjusts Nullwave while another app is playing audio."
+                )
             }
 
             Divider()
@@ -468,7 +480,34 @@ private struct QuickControlsView: View {
 
     private var playbackStatus: String {
         if callActivity.isPausedForCall { return "Paused for call" }
+        if audio.isPlaying && audio.isOtherAudioDuckingEnabled && audio.isOtherAudioPlaying {
+            return "Playing · other audio detected"
+        }
         return audio.isPlaying ? "Playing" : "Stopped"
+    }
+
+    private func quickVolumeControl(
+        title: String,
+        value: Binding<Double>,
+        accessibilityHint: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(title).font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Text("\(Int(value.wrappedValue * 100))%")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            HStack {
+                Image(systemName: "speaker.fill").accessibilityHidden(true)
+                Slider(value: value, in: 0...1)
+                    .accessibilityLabel(title)
+                    .accessibilityValue("\(Int(value.wrappedValue * 100)) percent")
+                    .accessibilityHint(accessibilityHint)
+                Image(systemName: "speaker.wave.3.fill").accessibilityHidden(true)
+            }
+        }
     }
 }
 
@@ -616,6 +655,34 @@ private struct FullSettingsView: View {
                         .foregroundStyle(.secondary)
                 }
 
+                if audio.isOtherAudioDuckingEnabled {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Volume while other audio is playing").font(.headline)
+                            Spacer()
+                            Text("\(Int(audio.savedOtherAudioVolume(for: kind) * 100))%")
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                        }
+                        HStack {
+                            Image(systemName: "speaker.fill")
+                                .accessibilityHidden(true)
+                            Slider(value: Binding(
+                                get: { audio.savedOtherAudioVolume(for: kind) },
+                                set: { audio.setSavedOtherAudioVolume($0, for: kind) }
+                            ), in: 0...1)
+                            .accessibilityLabel("Volume for \(kind.displayName) while other audio is playing")
+                            .accessibilityValue("\(Int(audio.savedOtherAudioVolume(for: kind) * 100)) percent")
+                            .accessibilityHint("Remembers the volume used when another app is playing audio.")
+                            Image(systemName: "speaker.wave.3.fill")
+                                .accessibilityHidden(true)
+                        }
+                        Text("Nullwave moves to this level over 200 milliseconds and returns to its normal volume over 400 milliseconds.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
                 favoriteControl(for: kind)
             }
             .padding(24)
@@ -680,6 +747,24 @@ private struct FullSettingsView: View {
                         Text(callActivity.isPausedForCall
                             ? "The same device is handling input and output. Nullwave will resume when that route changes."
                             : "When the same device is selected for system input and output, Nullwave pauses until that route changes.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(6)
+                }
+
+                GroupBox("Other Audio") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle(
+                            "Lower volume while other audio plays",
+                            isOn: $audio.isOtherAudioDuckingEnabled
+                        )
+                        .toggleStyle(.switch)
+                        .accessibilityHint("Shows a second per-sound volume and uses it while another app is playing audio.")
+                        Text(audio.isOtherAudioDuckingEnabled
+                            ? "Each sound keeps a separate volume for other-audio playback. The secondary controls appear in Quick Controls and each sound's settings."
+                            : "Turn this on to give every sound a second volume that is used while another app is playing audio.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

@@ -150,3 +150,120 @@ final class CallActivityController: ObservableObject {
         inputDeviceID == outputDeviceID
     }
 }
+
+/// Detects whether another process currently has an active Core Audio output
+/// stream. It inspects only process activity metadata; it never captures or
+/// analyzes another application's audio.
+@MainActor
+final class OtherAudioActivityController {
+    private let audio: NoiseAudioController
+    private var timer: Timer?
+
+    init(audio: NoiseAudioController) {
+        self.audio = audio
+    }
+
+    func startMonitoring() {
+        guard timer == nil else { return }
+        refresh()
+        let timer = Timer(timeInterval: 0.20, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.refresh() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        self.timer = timer
+    }
+
+    func stopMonitoring() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    private func refresh() {
+        guard audio.isOtherAudioDuckingEnabled else {
+            audio.updateOtherAudioPlaying(false)
+            return
+        }
+        audio.updateOtherAudioPlaying(Self.isAnotherProcessProducingAudio())
+    }
+
+    nonisolated private static func isAnotherProcessProducingAudio() -> Bool {
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        return processObjectIDs().contains { objectID in
+            guard let processID = processID(for: objectID), processID != ownPID else {
+                return false
+            }
+            return isRunningOutput(processObjectID: objectID)
+        }
+    }
+
+    nonisolated private static func processObjectIDs() -> [AudioObjectID] {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyProcessObjectList,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var byteCount: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(
+            AudioObjectID(kAudioObjectSystemObject),
+            &address,
+            0,
+            nil,
+            &byteCount
+        ) == noErr else { return [] }
+
+        var objectIDs = Array(
+            repeating: AudioObjectID(kAudioObjectUnknown),
+            count: Int(byteCount) / MemoryLayout<AudioObjectID>.size
+        )
+        guard !objectIDs.isEmpty else { return [] }
+        let status = objectIDs.withUnsafeMutableBytes { bytes in
+            AudioObjectGetPropertyData(
+                AudioObjectID(kAudioObjectSystemObject),
+                &address,
+                0,
+                nil,
+                &byteCount,
+                bytes.baseAddress!
+            )
+        }
+        return status == noErr ? objectIDs : []
+    }
+
+    nonisolated private static func processID(for objectID: AudioObjectID) -> pid_t? {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioProcessPropertyPID,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var pid = pid_t.zero
+        var byteCount = UInt32(MemoryLayout<pid_t>.size)
+        guard AudioObjectGetPropertyData(
+            objectID,
+            &address,
+            0,
+            nil,
+            &byteCount,
+            &pid
+        ) == noErr else { return nil }
+        return pid
+    }
+
+    nonisolated private static func isRunningOutput(processObjectID: AudioObjectID) -> Bool {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioProcessPropertyIsRunningOutput,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var isRunning = UInt32.zero
+        var byteCount = UInt32(MemoryLayout<UInt32>.size)
+        guard AudioObjectGetPropertyData(
+            processObjectID,
+            &address,
+            0,
+            nil,
+            &byteCount,
+            &isRunning
+        ) == noErr else { return false }
+        return isRunning != 0
+    }
+}

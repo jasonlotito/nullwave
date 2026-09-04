@@ -12,11 +12,12 @@ lunar-wave icon represents the app's dark sound and low-frequency waves.
 
 - Left-click the waveform in the menu bar to start or stop playback.
 - Right-click it to choose among your three favorite sounds and adjust the current sound's volume.
-- Choose **Open Nullwave Settings…** for the complete sound library, descriptions, per-sound volume, and favorite ordering.
+- Choose **Open Nullwave Settings…** for the complete sound library, descriptions, per-sound volumes, and favorite ordering.
 - Enable **Launch at Login** to keep it waiting in the menu bar after signing in.
 - Nullwave checks its signed update feed daily; use **Check for Updates…** in
   General Settings whenever you want to check immediately.
-- Every sound remembers its own volume across restarts; new installs default to Dark at 30%.
+- Every sound remembers its normal volume and its volume while other audio is playing; new installs default to 30% for both.
+- On macOS, enable **Lower volume while other audio plays** in General to reveal and use the secondary per-sound volume. Nullwave moves down to it over 200 milliseconds and returns to normal over 400 milliseconds.
 - **Detect headset call mode** optionally pauses when the same device becomes both the system input and output. It resumes afterward only when Nullwave was previously playing. It does not inspect applications or record microphone audio, and it can be disabled for audio setups that do not follow this pattern.
 - Choose **Quit Nullwave** in the settings window to close the app.
 
@@ -96,11 +97,12 @@ make ios-build
 ```
 
 The iOS app includes the full eleven-sound library, up to three configurable
-favorites, per-sound saved volume, previews, background playback, and explicit
+favorites, dual per-sound saved volumes, previews, background playback, and explicit
 VoiceOver names, values, and hints. Its playback audio session mixes with
-music, podcasts, and video from other apps instead of interrupting them. It
-also handles system audio interruptions and stops safely if headphones are
-disconnected.
+music, podcasts, and video from other apps instead of interrupting them. When
+another app plays audio, Nullwave smoothly uses each sound's secondary volume,
+then returns to its normal volume afterward. It also handles system audio
+interruptions and stops safely if headphones are disconnected.
 
 Nullwave does not register itself as the device's Now Playing app, so the other
 media app retains its Lock Screen and Control Center playback controls.
@@ -115,6 +117,7 @@ process and never launches the app itself:
 ./dist/nullwavectl stop
 ./dist/nullwavectl toggle
 ./dist/nullwavectl volume 35
+./dist/nullwavectl other-volume 20
 ./dist/nullwavectl noise brown
 ```
 

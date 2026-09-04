@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#060714">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="Nullwave is a free, private macOS menu-bar noise generator with 11 sounds, per-sound volume, favorites, call-mode pausing, and no ads or tracking.">
+  <meta name="description" content="Nullwave is a free, private macOS menu-bar noise generator with 11 sounds, adaptive per-sound volume, favorites, call-mode pausing, and no ads or tracking.">
   <meta name="author" content="Jason Lotito">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://nullwaveapp.com/">
@@ -13,7 +13,7 @@
   <meta property="og:site_name" content="Nullwave">
   <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Nullwave — Free Noise Generator for macOS">
-  <meta property="og:description" content="Eleven generated sounds in your Mac menu bar, with independent volume, quick favorites, and smart call-mode pausing. Free, private, and ad-free.">
+  <meta property="og:description" content="Eleven generated sounds in your Mac menu bar, with adaptive per-sound volume, quick favorites, and smart call-mode pausing. Free, private, and ad-free.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://nullwaveapp.com/">
   <meta property="og:image" content="https://nullwaveapp.com/assets/nullwave-social-card.png">
@@ -40,7 +40,7 @@
     "@type": "SoftwareApplication",
     "name": "Nullwave",
     "url": "https://nullwaveapp.com/",
-    "description": "A free, private macOS menu-bar noise generator with 11 generated sounds, independent per-sound volume, quick favorites, previews, and optional headset call-mode pausing.",
+    "description": "A free, private macOS menu-bar noise generator with 11 generated sounds, adaptive per-sound volume, quick favorites, previews, and optional headset call-mode pausing.",
     "applicationCategory": "UtilitiesApplication",
     "applicationSubCategory": "Productivity",
     "operatingSystem": "macOS 15 or later",
@@ -60,7 +60,7 @@
     },
     "featureList": [
       "11 generated noise and ambient sounds",
-      "Independent saved volume for every sound",
+      "Adaptive saved volumes for every sound",
       "Three customizable menu-bar favorites",
       "Non-disruptive sound previews",
       "Optional headset call-mode pausing",
@@ -179,8 +179,8 @@
           <div class="feature-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M3 12h2m2-4v8m4-11v14m4-10v6m4-3h2"/></svg>
           </div>
-          <h3>Your sound, your volume</h3>
-          <p>Each sound remembers its own level. Set Dark to 30%, Brown to 20%, and move between them without constant readjustment.</p>
+          <h3>Your sound, your volumes</h3>
+          <p>Each sound remembers its normal level and, when enabled, a second level for when another app is playing audio. Nullwave lowers and restores itself smoothly.</p>
           <div class="volume-memory" aria-hidden="true">
             <div><span>Dark</span><i style="--level: 30%"></i><b>30%</b></div>
             <div><span>Brown</span><i style="--level: 20%"></i><b>20%</b></div>
@@ -245,7 +245,7 @@
         <ul class="check-list">
           <li><span aria-hidden="true">✓</span><div><strong>Headset call-mode detection</strong><small>Optionally pauses when the same device handles input and output, then resumes afterward.</small></div></li>
           <li><span aria-hidden="true">✓</span><div><strong>Generated locally</strong><small>Every sound is created in real time on your Mac, with no audio files or loops.</small></div></li>
-          <li><span aria-hidden="true">✓</span><div><strong>Independent volume</strong><small>Nullwave never changes your Mac’s system volume.</small></div></li>
+          <li><span aria-hidden="true">✓</span><div><strong>Adaptive volume</strong><small>Optionally lower each sound while another app plays, without changing your Mac’s system volume.</small></div></li>
         </ul>
       </div>
     </section>

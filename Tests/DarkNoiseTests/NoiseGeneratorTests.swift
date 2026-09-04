@@ -40,6 +40,31 @@ struct NoiseGeneratorTests {
         #expect(generator.nextSample() == 0)
     }
 
+    @Test func outputVolumeUsesSmoothAttackAndReleaseRamps() {
+        let sampleRate = 48_000.0
+        let generator = NoiseGenerator(
+            kind: .white,
+            sampleRate: sampleRate,
+            initialVolume: 0.70
+        )
+
+        generator.setOutputVolume(0.30, durationSeconds: 0.20)
+        _ = generator.nextSample()
+        #expect(generator.currentOutputGain < 0.70)
+        #expect(generator.currentOutputGain > 0.30)
+
+        for _ in 1..<9_600 { _ = generator.nextSample() }
+        #expect(generator.currentOutputGain == 0.30)
+
+        generator.setOutputVolume(0.70, durationSeconds: 0.40)
+        for _ in 0..<9_600 { _ = generator.nextSample() }
+        #expect(generator.currentOutputGain > 0.30)
+        #expect(generator.currentOutputGain < 0.70)
+
+        for _ in 9_600..<19_200 { _ = generator.nextSample() }
+        #expect(generator.currentOutputGain == 0.70)
+    }
+
     @Test func continuousSoundsAvoidIsolatedLargeSampleSteps() {
         let continuousKinds: [NoiseKind] = [.dark, .brown, .deep, .fan, .cabin, .ocean]
 
@@ -69,20 +94,40 @@ struct NoiseAudioControllerTests {
         let firstLaunch = NoiseAudioController(defaults: defaults)
         #expect(firstLaunch.kind == .dark)
         #expect(firstLaunch.volume == 0.30)
+        #expect(firstLaunch.otherAudioVolume == 0.30)
+        #expect(!firstLaunch.isOtherAudioDuckingEnabled)
 
+        firstLaunch.isOtherAudioDuckingEnabled = true
         firstLaunch.kind = .pink
         firstLaunch.volume = 0.67
+        firstLaunch.otherAudioVolume = 0.22
         firstLaunch.kind = .dark
         firstLaunch.volume = 0.31
+        firstLaunch.otherAudioVolume = 0.18
         firstLaunch.kind = .pink
 
         let nextLaunch = NoiseAudioController(defaults: defaults)
         #expect(nextLaunch.kind == .pink)
         #expect(nextLaunch.volume == 0.67)
+        #expect(nextLaunch.otherAudioVolume == 0.22)
+        #expect(nextLaunch.isOtherAudioDuckingEnabled)
         #expect(!nextLaunch.isPlaying)
 
         nextLaunch.kind = .dark
         #expect(nextLaunch.volume == 0.31)
+        #expect(nextLaunch.otherAudioVolume == 0.18)
+    }
+
+    @Test func existingVolumesSeedTheNewOtherAudioVolume() {
+        let suiteName = "NullwaveTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set(0.64, forKey: "noiseVolume.pink")
+        defaults.set("pink", forKey: "noiseKind")
+
+        let controller = NoiseAudioController(defaults: defaults)
+        #expect(controller.volume == 0.64)
+        #expect(controller.otherAudioVolume == 0.64)
     }
 
     @Test func favoritesPersistAndRemainUnique() {

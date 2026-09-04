@@ -20,11 +20,17 @@ final class NoiseGenerator: @unchecked Sendable {
     private let oceanBodyAlpha: Float
     private let oceanLowerAlpha: Float
     private let envelopeGainStep: Float
+    private let volumeRequest: Atomic<UInt64>
     private let fadeOutRequested = Atomic(false)
     private let fadeOutCompleted = Atomic(false)
     private var randomState: UInt64 = 0x4d595df4d0f33173
     private var envelopeGain = Float.zero
     private var isFadingOut = false
+    private var activeVolumeRequest: UInt64
+    private var outputGain: Float
+    private var outputGainTarget: Float
+    private var outputGainStep = Float.zero
+    private var outputGainFramesRemaining = 0
 
     private var brown = Float.zero
     private var darkLow = Float.zero
@@ -49,9 +55,18 @@ final class NoiseGenerator: @unchecked Sendable {
     private var pink1 = Float.zero
     private var pink2 = Float.zero
 
-    init(kind: NoiseKind, sampleRate: Double) {
+    init(kind: NoiseKind, sampleRate: Double, initialVolume: Float = 1) {
+        let clampedVolume = min(max(initialVolume, 0), 1)
+        let initialVolumeRequest = Self.packedVolumeRequest(
+            volume: clampedVolume,
+            rampFrames: 0
+        )
         self.kind = kind
         self.sampleRate = sampleRate
+        volumeRequest = Atomic(initialVolumeRequest)
+        activeVolumeRequest = initialVolumeRequest
+        outputGain = clampedVolume
+        outputGainTarget = clampedVolume
         darkFirstAlpha = Self.lowPassAlpha(cutoff: 180, sampleRate: sampleRate)
         darkSecondAlpha = Self.lowPassAlpha(cutoff: 65, sampleRate: sampleRate)
         grayLowAlpha = Self.lowPassAlpha(cutoff: 120, sampleRate: sampleRate)
@@ -80,6 +95,7 @@ final class NoiseGenerator: @unchecked Sendable {
         let buffers = UnsafeMutableAudioBufferListPointer(audioBufferList)
         guard !buffers.isEmpty else { return }
         updateFadeOutState()
+        updateVolumeRequest()
 
         for frame in 0..<Int(frameCount) {
             let sample = nextSample(checkForFadeOut: false)
@@ -100,12 +116,31 @@ final class NoiseGenerator: @unchecked Sendable {
         fadeOutCompleted.load(ordering: .acquiring)
     }
 
+    /// Requests an allocation-free, sample-accurate gain ramp on the render
+    /// thread. The target and duration travel together in one atomic value.
+    func setOutputVolume(_ volume: Float, durationSeconds: Double) {
+        let clampedVolume = min(max(volume, 0), 1)
+        let frames = UInt32(min(
+            max((sampleRate * durationSeconds).rounded(), 0),
+            Double(UInt32.max)
+        ))
+        volumeRequest.store(
+            Self.packedVolumeRequest(volume: clampedVolume, rampFrames: frames),
+            ordering: .releasing
+        )
+    }
+
+    var currentOutputGain: Float { outputGain }
+
     func nextSample() -> Float {
         nextSample(checkForFadeOut: true)
     }
 
     private func nextSample(checkForFadeOut: Bool) -> Float {
-        if checkForFadeOut { updateFadeOutState() }
+        if checkForFadeOut {
+            updateFadeOutState()
+            updateVolumeRequest()
+        }
         guard !isFadingOut || envelopeGain > 0 else { return 0 }
 
         let sample = generateSample()
@@ -117,13 +152,42 @@ final class NoiseGenerator: @unchecked Sendable {
         } else if envelopeGain < 1 {
             envelopeGain = min(envelopeGain + envelopeGainStep, 1)
         }
-        return sample * envelopeGain
+        advanceOutputGain()
+        return sample * envelopeGain * outputGain
     }
 
     private func updateFadeOutState() {
         if !isFadingOut, fadeOutRequested.load(ordering: .acquiring) {
             isFadingOut = true
         }
+    }
+
+    private func updateVolumeRequest() {
+        let request = volumeRequest.load(ordering: .acquiring)
+        guard request != activeVolumeRequest else { return }
+        activeVolumeRequest = request
+
+        outputGainTarget = Float(bitPattern: UInt32(request >> 32))
+        outputGainFramesRemaining = Int(UInt32(truncatingIfNeeded: request))
+        guard outputGainFramesRemaining > 0 else {
+            outputGain = outputGainTarget
+            outputGainStep = 0
+            return
+        }
+        outputGainStep = (outputGainTarget - outputGain) / Float(outputGainFramesRemaining)
+    }
+
+    private func advanceOutputGain() {
+        guard outputGainFramesRemaining > 0 else { return }
+        outputGain += outputGainStep
+        outputGainFramesRemaining -= 1
+        if outputGainFramesRemaining == 0 {
+            outputGain = outputGainTarget
+        }
+    }
+
+    private static func packedVolumeRequest(volume: Float, rampFrames: UInt32) -> UInt64 {
+        UInt64(volume.bitPattern) << 32 | UInt64(rampFrames)
     }
 
     private func generateSample() -> Float {

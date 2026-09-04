@@ -17,6 +17,7 @@ private func usage() -> Never {
           nullwavectl stop
           nullwavectl toggle
           nullwavectl volume <0-100>
+          nullwavectl other-volume <0-100>
           nullwavectl noise <dark|brown|pink|white|gray|blue|violet|deep|fan|cabin|ocean>
         """,
         code: 64
@@ -36,11 +37,11 @@ switch command {
 case "play", "stop", "toggle":
     guard arguments.count == 1 else { usage() }
 
-case "volume":
+case "volume", "other-volume":
     guard arguments.count == 2,
           let percent = Double(arguments[1]),
           (0...100).contains(percent) else {
-        fail("volume must be a number from 0 through 100", code: 64)
+        fail("\(command) must be a number from 0 through 100", code: 64)
     }
     userInfo["value"] = percent / 100
 
