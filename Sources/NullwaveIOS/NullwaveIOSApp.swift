@@ -166,13 +166,15 @@ private struct ListenView: View {
                                 .minimumScaleFactor(0.8)
                         }
                         .frame(maxWidth: .infinity, minHeight: compact ? 52 : 68)
+                        .background(
+                            audio.kind == kind ? Color.nullwavePurple : Color.white.opacity(0.055),
+                            in: RoundedRectangle(cornerRadius: 16)
+                        )
+                        .contentShape(RoundedRectangle(cornerRadius: 16))
                     }
                     .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity)
                     .foregroundStyle(audio.kind == kind ? Color.white : Color.primary)
-                    .background(
-                        audio.kind == kind ? Color.nullwavePurple : Color.white.opacity(0.055),
-                        in: RoundedRectangle(cornerRadius: 16)
-                    )
                     .accessibilityLabel(kind.displayName)
                     .accessibilityValue(audio.kind == kind ? "Selected" : "Not selected")
                     .accessibilityHint("Selects \(kind.displayName) noise.")
