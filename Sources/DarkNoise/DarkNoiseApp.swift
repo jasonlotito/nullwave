@@ -564,7 +564,7 @@ private struct FullSettingsView: View {
                 }
             }
             .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 260)
+            .navigationSplitViewColumnWidth(min: 220, ideal: 220, max: 220)
         } detail: {
             switch selection {
             case .general:
@@ -762,9 +762,7 @@ private struct FullSettingsView: View {
                         )
                         .toggleStyle(.switch)
                         .accessibilityHint("Shows a second per-sound volume and uses it while another app is playing audio.")
-                        Text(audio.isOtherAudioDuckingEnabled
-                            ? "Each sound keeps a separate volume for other-audio playback. The secondary controls appear in Quick Controls and each sound's settings."
-                            : "Turn this on to give every sound a second volume that is used while another app is playing audio.")
+                        Text("Give every sound a second volume for when another app is playing audio. Nullwave moves smoothly between the two levels.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

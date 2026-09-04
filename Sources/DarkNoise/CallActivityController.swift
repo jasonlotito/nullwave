@@ -1,3 +1,4 @@
+import AppKit
 import CoreAudio
 import Combine
 import Foundation
@@ -188,8 +189,14 @@ final class OtherAudioActivityController {
 
     nonisolated private static func isAnotherProcessProducingAudio() -> Bool {
         let ownPID = ProcessInfo.processInfo.processIdentifier
+        let ownBundleIdentifier = Bundle.main.bundleIdentifier
         return processObjectIDs().contains { objectID in
             guard let processID = processID(for: objectID), processID != ownPID else {
+                return false
+            }
+            if let ownBundleIdentifier,
+               NSRunningApplication(processIdentifier: processID)?.bundleIdentifier
+                == ownBundleIdentifier {
                 return false
             }
             return isRunningOutput(processObjectID: objectID)
