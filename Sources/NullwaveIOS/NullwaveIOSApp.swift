@@ -384,16 +384,29 @@ private struct IOSSettingsView: View {
 
                 Section {
                     ForEach(Array(audio.favoriteKinds.enumerated()), id: \.element) { index, kind in
-                        Picker("Favorite \(index + 1)", selection: Binding(
-                            get: { audio.favoriteKinds[index] },
-                            set: { audio.setFavorite(at: index, to: $0) }
-                        )) {
+                        Menu {
                             ForEach(NoiseKind.allCases) { option in
-                                Label(option.displayName, systemImage: option.symbolName)
-                                    .tag(option)
+                                Button {
+                                    audio.setFavorite(at: index, to: option)
+                                } label: {
+                                    Label(option.displayName, systemImage: option.symbolName)
+                                }
                             }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Text("Favorite \(index + 1)")
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Text(kind.displayName)
+                                Image(systemName: kind.symbolName)
+                                    .frame(width: 24, alignment: .trailing)
+                                    .accessibilityHidden(true)
+                            }
+                            .frame(maxWidth: .infinity)
                         }
+                        .accessibilityLabel("Favorite \(index + 1)")
                         .accessibilityValue(kind.displayName)
+                        .accessibilityHint("Choose a sound for this Listen shortcut.")
                     }
 
                     if audio.favoriteKinds.count < 3 {
