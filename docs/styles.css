@@ -19,6 +19,7 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   min-width: 320px;
+  overflow-x: clip;
   color: var(--text);
   background:
     radial-gradient(ellipse 70% 45% at 73% 7%, rgba(68, 35, 180, .23), transparent 70%),
@@ -62,6 +63,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid rgba(48, 200, 255, .7
 .button-small { min-height: 38px; padding-inline: 16px; border-radius: 10px; font-size: .88rem; }
 
 .hero { min-height: 710px; display: grid; grid-template-columns: .86fr 1.14fr; align-items: center; gap: 44px; padding-block: 80px 90px; }
+.hero-copy, .hero-visual { min-width: 0; }
 .eyebrow { color: var(--purple-bright); font-size: .76rem; font-weight: 750; letter-spacing: .13em; text-transform: uppercase; }
 .status-dot { display: inline-block; width: 7px; height: 7px; margin: 0 8px 1px 0; border-radius: 99px; background: var(--blue); box-shadow: 0 0 12px var(--blue); }
 h1, h2, h3, p { margin-top: 0; }
@@ -197,6 +199,8 @@ code span { color: var(--blue); }
   .hero-actions { flex-direction: column; gap: 16px; }
   .hero-actions .button { width: 100%; }
   .hero-visual { min-height: 410px; }
+  .menu-bar-demo { width: min(350px, calc(100vw - 48px)); padding: 18px; }
+  .status-bar-demo { width: calc(100% - 12px); }
   .orbit-one { width: 340px; height: 340px; }
   .stats { grid-template-columns: repeat(2, 1fr); }
   .stats div:nth-child(2) { border-right: 0; }

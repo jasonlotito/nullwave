@@ -1,5 +1,7 @@
 import AVFoundation
+#if canImport(AppKit)
 import AppKit
+#endif
 import Combine
 import Foundation
 
@@ -86,6 +88,7 @@ enum NoiseKind: String, CaseIterable, Identifiable, Sendable {
 final class NoiseAudioController: ObservableObject {
     @Published private(set) var isPlaying = false
     @Published private(set) var previewKind: NoiseKind?
+    @Published private(set) var playbackErrorMessage: String?
 
     @Published var volume: Double {
         didSet {
@@ -124,6 +127,9 @@ final class NoiseAudioController: ObservableObject {
     private var generator: NoiseGenerator?
     private var previewOrigin: (kind: NoiseKind, wasPlaying: Bool)?
     private var isChangingPreviewSound = false
+#if os(iOS)
+    private var shouldResumeAfterInterruption = false
+#endif
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -216,21 +222,71 @@ final class NoiseAudioController: ObservableObject {
     func start() {
         guard !isPlaying else { return }
         do {
+#if os(iOS)
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers, .allowAirPlay])
+            try session.setActive(true)
+#endif
             try configureAndStartEngine()
             isPlaying = true
+            playbackErrorMessage = nil
         } catch {
+#if canImport(AppKit)
             NSSound.beep()
+#endif
             isPlaying = false
+            playbackErrorMessage = error.localizedDescription
             NSLog("Nullwave could not start audio: %@", error.localizedDescription)
         }
     }
 
     func stop() {
+        stop(deactivateAudioSession: true)
+    }
+
+#if os(iOS)
+    func handleAudioSessionInterruption(_ notification: Notification) {
+        guard let rawType = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: rawType) else { return }
+
+        switch type {
+        case .began:
+            shouldResumeAfterInterruption = isPlaying
+            stop(deactivateAudioSession: false)
+        case .ended:
+            let rawOptions = notification.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+            let options = AVAudioSession.InterruptionOptions(rawValue: rawOptions)
+            let shouldResume = shouldResumeAfterInterruption && options.contains(.shouldResume)
+            shouldResumeAfterInterruption = false
+            if shouldResume { start() }
+        @unknown default:
+            break
+        }
+    }
+
+    func handleAudioRouteChange(_ notification: Notification) {
+        guard let rawReason = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
+              AVAudioSession.RouteChangeReason(rawValue: rawReason) == .oldDeviceUnavailable else {
+            return
+        }
+        stop()
+    }
+#endif
+
+    private func stop(deactivateAudioSession: Bool) {
         engine.stop()
         if let sourceNode { engine.detach(sourceNode) }
         sourceNode = nil
         generator = nil
         isPlaying = false
+#if os(iOS)
+        if deactivateAudioSession {
+            try? AVAudioSession.sharedInstance().setActive(
+                false,
+                options: .notifyOthersOnDeactivation
+            )
+        }
+#endif
     }
 
     private func restart() {

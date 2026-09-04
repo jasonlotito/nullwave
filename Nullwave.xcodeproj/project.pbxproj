@@ -17,6 +17,11 @@
 		B00000000000000000000009 /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000009 /* AppIcon.png */; };
 		B0000000000000000000000A /* MenuBarIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000A /* MenuBarIcon.png */; };
 		B0000000000000000000000B /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 310000000000000000000001 /* Sparkle */; };
+		B0000000000000000000000C /* NullwaveIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000013 /* NullwaveIOSApp.swift */; };
+		B0000000000000000000000D /* NoiseAudioController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000004 /* NoiseAudioController.swift */; };
+		B0000000000000000000000E /* NoiseGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000005 /* NoiseGenerator.swift */; };
+		B0000000000000000000000F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000014 /* Assets.xcassets */; };
+		B00000000000000000000010 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000017 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,12 +53,18 @@
 		A00000000000000000000010 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		A00000000000000000000011 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = text.script.make; path = Makefile; sourceTree = "<group>"; };
 		A00000000000000000000012 /* build-app.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-app.sh"; sourceTree = "<group>"; };
+		A00000000000000000000013 /* NullwaveIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NullwaveIOSApp.swift; sourceTree = "<group>"; };
+		A00000000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A00000000000000000000015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A00000000000000000000016 /* NullwaveIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NullwaveIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000017 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		D00000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (B0000000000000000000000B /* Sparkle in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
 		D00000000000000000000004 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		D00000000000000000000006 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		D00000000000000000000008 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -63,6 +74,7 @@
 				C00000000000000000000002 /* Sources */,
 				C00000000000000000000006 /* Tests */,
 				C00000000000000000000005 /* Resources */,
+				C0000000000000000000000B /* iOSResources */,
 				C00000000000000000000009 /* scripts */,
 				A00000000000000000000010 /* Package.swift */,
 				A00000000000000000000011 /* Makefile */,
@@ -71,14 +83,16 @@
 			);
 			sourceTree = "<group>";
 		};
-		C00000000000000000000002 /* Sources */ = {isa = PBXGroup; children = (C00000000000000000000003 /* DarkNoise */, C00000000000000000000004 /* NullwaveCLI */); path = Sources; sourceTree = "<group>"; };
+		C00000000000000000000002 /* Sources */ = {isa = PBXGroup; children = (C00000000000000000000003 /* DarkNoise */, C0000000000000000000000A /* NullwaveIOS */, C00000000000000000000004 /* NullwaveCLI */); path = Sources; sourceTree = "<group>"; };
 		C00000000000000000000003 /* DarkNoise */ = {isa = PBXGroup; children = (A00000000000000000000001, A00000000000000000000002, A00000000000000000000003, A00000000000000000000004, A00000000000000000000005); path = DarkNoise; sourceTree = "<group>"; };
 		C00000000000000000000004 /* NullwaveCLI */ = {isa = PBXGroup; children = (A00000000000000000000006); path = NullwaveCLI; sourceTree = "<group>"; };
 		C00000000000000000000005 /* Resources */ = {isa = PBXGroup; children = (A00000000000000000000008, A00000000000000000000009, A0000000000000000000000A, A0000000000000000000000B); path = Resources; sourceTree = "<group>"; };
 		C00000000000000000000006 /* Tests */ = {isa = PBXGroup; children = (C00000000000000000000007 /* DarkNoiseTests */); path = Tests; sourceTree = "<group>"; };
 		C00000000000000000000007 /* DarkNoiseTests */ = {isa = PBXGroup; children = (A00000000000000000000007); path = DarkNoiseTests; sourceTree = "<group>"; };
-		C00000000000000000000008 /* Products */ = {isa = PBXGroup; children = (A0000000000000000000000C, A0000000000000000000000D, A0000000000000000000000E); name = Products; sourceTree = "<group>"; };
+		C00000000000000000000008 /* Products */ = {isa = PBXGroup; children = (A0000000000000000000000C, A00000000000000000000016, A0000000000000000000000D, A0000000000000000000000E); name = Products; sourceTree = "<group>"; };
 		C00000000000000000000009 /* scripts */ = {isa = PBXGroup; children = (A00000000000000000000012); path = scripts; sourceTree = "<group>"; };
+		C0000000000000000000000A /* NullwaveIOS */ = {isa = PBXGroup; children = (A00000000000000000000013); path = NullwaveIOS; sourceTree = "<group>"; };
+		C0000000000000000000000B /* iOSResources */ = {isa = PBXGroup; children = (A00000000000000000000014, A00000000000000000000015, A00000000000000000000017); path = iOSResources; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -116,6 +130,18 @@
 			productReference = A0000000000000000000000E /* NullwaveTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		E00000000000000000000004 /* Nullwave iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 100000000000000000000005 /* Build configuration list for PBXNativeTarget "Nullwave iOS" */;
+			buildPhases = (D00000000000000000000009 /* Sources */, D00000000000000000000008 /* Frameworks */, D0000000000000000000000A /* Resources */);
+			buildRules = ();
+			dependencies = ();
+			name = "Nullwave iOS";
+			packageProductDependencies = ();
+			productName = NullwaveIOS;
+			productReference = A00000000000000000000016 /* NullwaveIOS.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -129,6 +155,7 @@
 					E00000000000000000000001 = {CreatedOnToolsVersion = 26.6; };
 					E00000000000000000000002 = {CreatedOnToolsVersion = 26.6; };
 					E00000000000000000000003 = {CreatedOnToolsVersion = 26.6; TestTargetID = E00000000000000000000001; };
+					E00000000000000000000004 = {CreatedOnToolsVersion = 26.6; };
 				};
 			};
 			buildConfigurationList = 100000000000000000000001 /* Build configuration list for PBXProject "Nullwave" */;
@@ -141,18 +168,20 @@
 			productRefGroup = C00000000000000000000008 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (E00000000000000000000001, E00000000000000000000002, E00000000000000000000003);
+			targets = (E00000000000000000000001, E00000000000000000000004, E00000000000000000000002, E00000000000000000000003);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		D00000000000000000000003 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000008, B00000000000000000000009, B0000000000000000000000A); runOnlyForDeploymentPostprocessing = 0; };
+		D0000000000000000000000A /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (B0000000000000000000000F /* Assets.xcassets in Resources */, B00000000000000000000010 /* PrivacyInfo.xcprivacy in Resources */); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		D00000000000000000000002 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000001, B00000000000000000000002, B00000000000000000000003, B00000000000000000000004, B00000000000000000000005); runOnlyForDeploymentPostprocessing = 0; };
 		D00000000000000000000005 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000006); runOnlyForDeploymentPostprocessing = 0; };
 		D00000000000000000000007 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000007); runOnlyForDeploymentPostprocessing = 0; };
+		D00000000000000000000009 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B0000000000000000000000C /* NullwaveIOSApp.swift in Sources */, B0000000000000000000000D /* NoiseAudioController.swift in Sources */, B0000000000000000000000E /* NoiseGenerator.swift in Sources */); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -168,6 +197,8 @@
 		F00000000000000000000006 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_NAME = nullwavectl; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; }; name = Release; };
 		F00000000000000000000007 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.jasonlotito.nullwave.tests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Nullwave.app/Contents/MacOS/Nullwave"; }; name = Debug; };
 		F00000000000000000000008 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.jasonlotito.nullwave.tests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Nullwave.app/Contents/MacOS/Nullwave"; }; name = Release; };
+		F00000000000000000000009 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = 47UF97CY9G; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = iOSResources/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.jasonlotito.nullwave.ios; PRODUCT_NAME = NullwaveIOS; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Debug; };
+		F0000000000000000000000A /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = 47UF97CY9G; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = iOSResources/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.jasonlotito.nullwave.ios; PRODUCT_NAME = NullwaveIOS; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_OPTIMIZATION_LEVEL = "-O"; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -175,6 +206,7 @@
 		100000000000000000000002 /* Build configuration list for PBXNativeTarget "Nullwave" */ = {isa = XCConfigurationList; buildConfigurations = (F00000000000000000000003, F00000000000000000000004); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 		100000000000000000000003 /* Build configuration list for PBXNativeTarget "nullwavectl" */ = {isa = XCConfigurationList; buildConfigurations = (F00000000000000000000005, F00000000000000000000006); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 		100000000000000000000004 /* Build configuration list for PBXNativeTarget "NullwaveTests" */ = {isa = XCConfigurationList; buildConfigurations = (F00000000000000000000007, F00000000000000000000008); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		100000000000000000000005 /* Build configuration list for PBXNativeTarget "Nullwave iOS" */ = {isa = XCConfigurationList; buildConfigurations = (F00000000000000000000009, F0000000000000000000000A); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */

@@ -1,4 +1,4 @@
-.PHONY: build test app signed-app release install-cli run xcode-build xcode-test clean
+.PHONY: build test app signed-app release install-cli run xcode-build xcode-test ios-build clean
 
 DEVELOPER_IDENTITY ?= Developer ID Application: Jason Lotito (47UF97CY9G)
 NOTARY_PROFILE ?= nullwave-notary
@@ -34,6 +34,9 @@ xcode-build:
 
 xcode-test:
 	xcodebuild -project Nullwave.xcodeproj -scheme Nullwave -configuration Debug -derivedDataPath .build/xcode CODE_SIGNING_ALLOWED=NO test
+
+ios-build:
+	xcodebuild -project Nullwave.xcodeproj -scheme "Nullwave iOS" -configuration Debug -destination "generic/platform=iOS Simulator" -derivedDataPath .build/xcode-ios CODE_SIGNING_ALLOWED=NO build
 
 clean:
 	swift package clean

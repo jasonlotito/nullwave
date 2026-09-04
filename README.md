@@ -4,9 +4,9 @@
 
 <h1 align="center">Nullwave</h1>
 
-A tiny native macOS menu-bar noise player. It generates audio in real time and
-has its own volume control, independent of the macOS system volume setting.
-Its lunar-wave icon represents the app's dark sound and low-frequency waves.
+A tiny native noise player for macOS and iOS. It generates audio in real time
+and has its own volume control, independent of the system volume setting. Its
+lunar-wave icon represents the app's dark sound and low-frequency waves.
 
 ## Use
 
@@ -84,6 +84,26 @@ installed copy, and completes login-item registration. It uses a distinct
 bundle identifier and will not replace the existing Dark Noise application.
 If Nullwave was playing before the move, the installed copy resumes the same
 noise type and volume automatically.
+
+## iOS app
+
+The separate native SwiftUI app requires iOS 17 or newer. Open the shared
+`Nullwave iOS` scheme in Xcode, or build it for the Simulator from the command
+line:
+
+```sh
+make ios-build
+```
+
+The iOS app includes the full eleven-sound library, up to three configurable
+favorites, per-sound saved volume, previews, background playback, and explicit
+VoiceOver names, values, and hints. Its playback audio session mixes with
+music, podcasts, and video from other apps instead of interrupting them. It
+also handles system audio interruptions and stops safely if headphones are
+disconnected.
+
+Nullwave does not register itself as the device's Now Playing app, so the other
+media app retains its Lock Screen and Control Center playback controls.
 
 ## Command-line control
 
