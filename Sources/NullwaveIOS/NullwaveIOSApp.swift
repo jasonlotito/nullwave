@@ -8,7 +8,8 @@ struct NullwaveIOSApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(audio: audio)
-                .tint(.indigo)
+                .tint(.nullwavePurpleBright)
+                .preferredColorScheme(.dark)
                 .onReceive(NotificationCenter.default.publisher(
                     for: AVAudioSession.interruptionNotification
                 )) { notification in
@@ -35,6 +36,8 @@ private struct RootView: View {
             IOSSettingsView(audio: audio)
                 .tabItem { Label("Settings", systemImage: "gearshape") }
         }
+        .toolbarBackground(Color.nullwaveBackground, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
     }
 }
 
@@ -43,45 +46,68 @@ private struct ListenView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                NullwaveBackground()
+            GeometryReader { geometry in
+                let compact = geometry.size.height < 620
+                let landscape = geometry.size.width > geometry.size.height
                 ScrollView {
-                    VStack(spacing: 28) {
-                        Spacer(minLength: 18)
-                        nowPlaying
-                        favoritePicker
-                        volumeControl
-                        mixingNotice
-                    }
-                    .padding(.horizontal, 22)
-                    .padding(.bottom, 34)
+                    listenContent(compact: compact, landscape: landscape)
+                        .frame(minHeight: geometry.size.height, alignment: .top)
                 }
+                .scrollBounceBehavior(.basedOnSize)
+                .background(NullwaveBackground())
             }
             .navigationTitle("Nullwave")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color.nullwaveBackground.opacity(0.94), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
 
-    private var nowPlaying: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(.indigo.opacity(0.13))
-                    .frame(width: 190, height: 190)
-                Circle()
-                    .stroke(.indigo.opacity(0.22), lineWidth: 1)
-                    .frame(width: 156, height: 156)
-                Image(systemName: audio.kind.symbolName)
-                    .font(.system(size: 58, weight: .medium))
-                    .foregroundStyle(.indigo)
-                    .accessibilityHidden(true)
+    @ViewBuilder
+    private func listenContent(compact: Bool, landscape: Bool) -> some View {
+        Group {
+            if landscape {
+                HStack(spacing: 14) {
+                    nowPlaying(compact: true)
+                        .frame(maxWidth: .infinity)
+                    VStack(spacing: 8) {
+                        favoritePicker(compact: true)
+                        volumeControl(compact: true)
+                        mixingNotice
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            } else {
+                VStack(spacing: compact ? 10 : 20) {
+                    nowPlaying(compact: compact)
+                    favoritePicker(compact: compact)
+                    volumeControl(compact: compact)
+                    mixingNotice
+                }
             }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, compact ? 16 : 22)
+        .padding(.top, landscape ? 4 : (compact ? 6 : 16))
+        .padding(.bottom, landscape ? 4 : (compact ? 8 : 22))
+    }
 
-            VStack(spacing: 5) {
+    private func nowPlaying(compact: Bool) -> some View {
+        VStack(spacing: compact ? 7 : 12) {
+            Image("NullwaveLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: compact ? 88 : 132, height: compact ? 88 : 132)
+                .clipShape(RoundedRectangle(cornerRadius: compact ? 20 : 29))
+                .shadow(color: .nullwavePurple.opacity(0.34), radius: 24)
+                .accessibilityHidden(true)
+
+            VStack(spacing: 2) {
                 Text(audio.kind.displayName)
-                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                    .font(.system(compact ? .title : .largeTitle, design: .rounded, weight: .bold))
                 Text(audio.isPlaying ? "Playing with other audio" : "Ready to play")
-                    .foregroundStyle(.secondary)
+                    .font(compact ? .subheadline : .body)
+                    .foregroundStyle(Color.nullwaveMuted)
             }
             .accessibilityElement(children: .combine)
 
@@ -93,10 +119,19 @@ private struct ListenView: View {
                     systemImage: audio.isPlaying ? "stop.fill" : "play.fill"
                 )
                 .font(.headline)
-                .frame(minWidth: 126, minHeight: 52)
+                .frame(minWidth: 138, minHeight: compact ? 44 : 50)
+                .padding(.horizontal, 20)
+                .background(
+                    LinearGradient(
+                        colors: [.nullwavePurple, .nullwaveBlue],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    in: Capsule()
+                )
             }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.capsule)
+            .buttonStyle(.plain)
+            .foregroundStyle(.white)
             .keyboardShortcut(.space, modifiers: [])
             .accessibilityHint(audio.isPlaying
                 ? "Stops Nullwave. Other audio keeps playing."
@@ -112,30 +147,30 @@ private struct ListenView: View {
         }
     }
 
-    private var favoritePicker: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private func favoritePicker(compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: compact ? 7 : 11) {
             Text("Favorites")
                 .font(.headline)
-            HStack(spacing: 10) {
+            HStack(spacing: compact ? 7 : 10) {
                 ForEach(audio.favoriteKinds) { kind in
                     Button {
                         audio.kind = kind
                     } label: {
-                        VStack(spacing: 8) {
+                        VStack(spacing: compact ? 5 : 8) {
                             Image(systemName: kind.symbolName)
-                                .font(.title3)
+                                .font(compact ? .body : .title3)
                                 .accessibilityHidden(true)
                             Text(kind.displayName)
                                 .font(.subheadline.weight(.semibold))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                         }
-                        .frame(maxWidth: .infinity, minHeight: 72)
+                        .frame(maxWidth: .infinity, minHeight: compact ? 52 : 68)
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(audio.kind == kind ? Color.white : Color.primary)
                     .background(
-                        audio.kind == kind ? Color.indigo : Color.secondary.opacity(0.10),
+                        audio.kind == kind ? Color.nullwavePurple : Color.white.opacity(0.055),
                         in: RoundedRectangle(cornerRadius: 16)
                     )
                     .accessibilityLabel(kind.displayName)
@@ -144,19 +179,19 @@ private struct ListenView: View {
                 }
             }
         }
-        .padding(18)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 22))
+        .padding(compact ? 12 : 17)
+        .nullwavePanel(cornerRadius: 22)
     }
 
-    private var volumeControl: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private func volumeControl(compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: compact ? 6 : 11) {
             HStack {
                 Text("Nullwave volume")
                     .font(.headline)
                 Spacer()
                 Text("\(volumePercent)%")
                     .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.nullwaveMuted)
             }
             HStack(spacing: 12) {
                 Image(systemName: "speaker.fill")
@@ -169,8 +204,8 @@ private struct ListenView: View {
                     .accessibilityHidden(true)
             }
         }
-        .padding(18)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 22))
+        .padding(compact ? 12 : 17)
+        .nullwavePanel(cornerRadius: 22)
     }
 
     private var mixingNotice: some View {
@@ -180,7 +215,7 @@ private struct ListenView: View {
             Image(systemName: "waveform.badge.plus")
         }
         .font(.footnote)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color.nullwaveMuted)
         .padding(.horizontal, 6)
     }
 
@@ -199,7 +234,7 @@ private struct SoundLibraryView: View {
                     HStack(spacing: 14) {
                         Image(systemName: kind.symbolName)
                             .font(.title3)
-                            .foregroundStyle(.indigo)
+                            .foregroundStyle(Color.nullwavePurpleBright)
                             .frame(width: 34)
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 3) {
@@ -207,19 +242,24 @@ private struct SoundLibraryView: View {
                                 .font(.headline)
                             Text(kind.spectrum)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.nullwaveMuted)
                         }
                         Spacer()
                         if audio.kind == kind {
                             Image(systemName: audio.isPlaying ? "waveform" : "checkmark")
-                                .foregroundStyle(.indigo)
+                                .foregroundStyle(Color.nullwaveBlue)
                                 .accessibilityLabel(audio.isPlaying ? "Currently playing" : "Current sound")
                         }
                     }
                     .padding(.vertical, 4)
                 }
+                .listRowBackground(Color.nullwavePanel.opacity(0.88))
             }
+            .scrollContentBackground(.hidden)
+            .background(NullwaveBackground())
             .navigationTitle("Sounds")
+            .toolbarBackground(Color.nullwaveBackground.opacity(0.94), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
 }
@@ -238,8 +278,11 @@ private struct SoundDetailView: View {
             }
             .padding(22)
         }
+        .background(NullwaveBackground())
         .navigationTitle(kind.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color.nullwaveBackground.opacity(0.94), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
         .onDisappear { audio.stopPreview() }
     }
 
@@ -247,12 +290,12 @@ private struct SoundDetailView: View {
         VStack(spacing: 16) {
             Image(systemName: kind.symbolName)
                 .font(.system(size: 54))
-                .foregroundStyle(.indigo)
+                .foregroundStyle(Color.nullwavePurpleBright)
                 .frame(maxWidth: .infinity)
                 .accessibilityHidden(true)
             Text(kind.spectrum)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.nullwaveMuted)
             HStack(spacing: 12) {
                 Button(audio.previewKind == kind ? "Stop Preview" : "Preview") {
                     audio.togglePreview(of: kind)
@@ -274,15 +317,15 @@ private struct SoundDetailView: View {
             .frame(maxWidth: .infinity)
         }
         .padding(22)
-        .background(Color.indigo.opacity(0.09), in: RoundedRectangle(cornerRadius: 24))
+        .nullwavePanel(cornerRadius: 24)
     }
 
     private var description: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("About this sound").font(.headline)
-            Text(kind.summary).foregroundStyle(.secondary)
+            Text(kind.summary).foregroundStyle(Color.nullwaveMuted)
             Text("Good for").font(.headline).padding(.top, 6)
-            Text(kind.bestFor).foregroundStyle(.secondary)
+            Text(kind.bestFor).foregroundStyle(Color.nullwaveMuted)
         }
     }
 
@@ -293,7 +336,7 @@ private struct SoundDetailView: View {
                 Spacer()
                 Text("\(savedVolumePercent)%")
                     .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.nullwaveMuted)
             }
             Slider(value: Binding(
                 get: { audio.savedVolume(for: kind) },
@@ -308,10 +351,10 @@ private struct SoundDetailView: View {
                 ? "This adjusts the preview and is remembered for next time."
                 : "Each sound keeps its own volume independently.")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.nullwaveMuted)
         }
         .padding(18)
-        .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 18))
+        .nullwavePanel(cornerRadius: 18)
     }
 
     private var favoriteControl: some View {
@@ -319,7 +362,7 @@ private struct SoundDetailView: View {
             Text("Favorites").font(.headline)
             Text(favoriteDescription)
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.nullwaveMuted)
             Menu {
                 if let slot = favoriteSlot {
                     Button("Remove from Favorites", role: .destructive) {
@@ -379,7 +422,7 @@ private struct IOSSettingsView: View {
                     LabeledContent("Background playback", value: "Enabled")
                     Text("Nullwave keeps playing when you use another app or lock your device. Music, podcasts, and video continue at their own volume.")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.nullwaveMuted)
                 }
 
                 Section {
@@ -434,22 +477,69 @@ private struct IOSSettingsView: View {
                     Link("Nullwave website", destination: URL(string: "https://nullwaveapp.com/")!)
                     Text("No account, analytics, ads, audio files, or network connection required.")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.nullwaveMuted)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(NullwaveBackground())
             .navigationTitle("Settings")
+            .toolbarBackground(Color.nullwaveBackground.opacity(0.94), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
 }
 
 private struct NullwaveBackground: View {
     var body: some View {
-        LinearGradient(
-            colors: [Color.indigo.opacity(0.10), Color.clear, Color.cyan.opacity(0.05)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        ZStack {
+            Color.nullwaveBackground
+            RadialGradient(
+                colors: [Color.nullwavePurple.opacity(0.25), .clear],
+                center: .topTrailing,
+                startRadius: 0,
+                endRadius: 430
+            )
+            RadialGradient(
+                colors: [Color.nullwaveBlue.opacity(0.10), .clear],
+                center: .bottomLeading,
+                startRadius: 0,
+                endRadius: 380
+            )
+        }
         .ignoresSafeArea()
         .accessibilityHidden(true)
     }
+}
+
+private struct NullwavePanelModifier: ViewModifier {
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                Color.nullwavePanel.opacity(0.90),
+                in: RoundedRectangle(cornerRadius: cornerRadius)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(Color.nullwaveLine, lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.22), radius: 16, y: 8)
+    }
+}
+
+private extension View {
+    func nullwavePanel(cornerRadius: CGFloat) -> some View {
+        modifier(NullwavePanelModifier(cornerRadius: cornerRadius))
+    }
+}
+
+private extension Color {
+    static let nullwaveBackground = Color(red: 6 / 255, green: 7 / 255, blue: 20 / 255)
+    static let nullwavePanel = Color(red: 17 / 255, green: 20 / 255, blue: 38 / 255)
+    static let nullwaveMuted = Color(red: 170 / 255, green: 170 / 255, blue: 192 / 255)
+    static let nullwavePurple = Color(red: 118 / 255, green: 82 / 255, blue: 255 / 255)
+    static let nullwavePurpleBright = Color(red: 161 / 255, green: 140 / 255, blue: 255 / 255)
+    static let nullwaveBlue = Color(red: 48 / 255, green: 200 / 255, blue: 255 / 255)
+    static let nullwaveLine = Color(red: 172 / 255, green: 181 / 255, blue: 255 / 255).opacity(0.18)
 }
