@@ -99,7 +99,7 @@ h1 span { color: transparent; background: linear-gradient(100deg, #a289ff 15%, #
 .status-right .battery-level { fill: currentColor; stroke: none; }
 .nullwave-status-icon { z-index: 1; width: 34px; height: 28px; display: grid; place-items: center; justify-self: center; border: 1px solid rgba(147,128,255,.3); border-radius: 7px; background: rgba(105,78,238,.2); box-shadow: 0 0 18px rgba(92,76,255,.2); }
 .nullwave-status-icon img { width: 18px; height: 18px; filter: invert(1); opacity: .95; }
-.menu-bar-demo { position: absolute; top: 104px; left: 50%; width: min(350px, 86vw); padding: 21px; overflow: visible; border: 1px solid rgba(213, 216, 255, .21); border-radius: 17px; background: linear-gradient(145deg, rgba(31, 33, 49, .96), rgba(14, 16, 30, .94)); box-shadow: 0 45px 100px rgba(0, 0, 0, .52), 0 0 0 1px rgba(0, 0, 0, .3), inset 0 1px rgba(255, 255, 255, .08); backdrop-filter: blur(30px); transform: translateX(-50%) rotate(var(--menu-tilt)); transform-origin: top center; }
+.menu-bar-demo { position: absolute; top: 114px; left: 50%; width: min(350px, 86vw); padding: 21px; overflow: visible; border: 1px solid rgba(213, 216, 255, .21); border-radius: 17px; background: linear-gradient(145deg, rgba(31, 33, 49, .96), rgba(14, 16, 30, .94)); box-shadow: 0 45px 100px rgba(0, 0, 0, .52), 0 0 0 1px rgba(0, 0, 0, .3), inset 0 1px rgba(255, 255, 255, .08); backdrop-filter: blur(30px); transform: translateX(-50%) rotate(var(--menu-tilt)); transform-origin: top center; }
 .menu-pointer { position: absolute; top: -8px; left: 50%; width: 16px; height: 16px; margin-left: -8px; transform: rotate(45deg); border-top: 1px solid rgba(213, 216, 255, .21); border-left: 1px solid rgba(213, 216, 255, .21); background: #1e2031; }
 .panel-head { display: flex; align-items: center; gap: 11px; }
 .panel-head strong, .panel-head span { display: block; }
@@ -215,7 +215,7 @@ code span { color: var(--blue); }
   .hero-actions { flex-direction: column; gap: 16px; }
   .hero-actions .button { width: 100%; }
   .hero-visual { min-height: 410px; }
-  .menu-bar-demo { top: 104px; width: min(350px, calc(100vw - 48px)); padding: 18px; }
+  .menu-bar-demo { top: 114px; width: min(350px, calc(100vw - 48px)); padding: 18px; }
   .status-bar-demo { width: calc(100% - 12px); }
   .orbit-one { width: 340px; height: 340px; }
   .stats { grid-template-columns: repeat(2, 1fr); }
