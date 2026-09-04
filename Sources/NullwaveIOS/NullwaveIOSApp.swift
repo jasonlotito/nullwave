@@ -56,10 +56,7 @@ private struct ListenView: View {
                 .scrollBounceBehavior(.basedOnSize)
                 .background(NullwaveBackground())
             }
-            .navigationTitle("Nullwave")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.nullwaveBackground.opacity(0.94), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 
@@ -260,6 +257,8 @@ private struct SoundLibraryView: View {
             .scrollContentBackground(.hidden)
             .background(NullwaveBackground())
             .navigationTitle("Sounds")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(Color.nullwaveBackground.opacity(0.94), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
@@ -283,6 +282,7 @@ private struct SoundDetailView: View {
         .background(NullwaveBackground())
         .navigationTitle(kind.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbarBackground(Color.nullwaveBackground.opacity(0.94), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .onDisappear { audio.stopPreview() }
@@ -485,6 +485,8 @@ private struct IOSSettingsView: View {
             .scrollContentBackground(.hidden)
             .background(NullwaveBackground())
             .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(Color.nullwaveBackground.opacity(0.94), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
