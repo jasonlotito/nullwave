@@ -225,6 +225,7 @@ final class NoiseAudioController: ObservableObject {
 #if os(iOS)
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .default, options: [.mixWithOthers, .allowAirPlay])
+            try session.setPreferredIOBufferDuration(0.02)
             try session.setActive(true)
 #endif
             try configureAndStartEngine()

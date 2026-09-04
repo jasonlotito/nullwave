@@ -17,6 +17,31 @@ struct NoiseGeneratorTests {
             #expect(hasNonZeroSample)
         }
     }
+
+    @Test func startupIsRampedInRatherThanBeginningWithAnAbruptSample() {
+        for kind in NoiseKind.allCases {
+            let generator = NoiseGenerator(kind: kind, sampleRate: 48_000)
+            #expect(abs(generator.nextSample()) < 0.001)
+        }
+    }
+
+    @Test func continuousSoundsAvoidIsolatedLargeSampleSteps() {
+        let continuousKinds: [NoiseKind] = [.dark, .brown, .deep, .fan, .cabin, .ocean]
+
+        for kind in continuousKinds {
+            let generator = NoiseGenerator(kind: kind, sampleRate: 48_000)
+            var previous = generator.nextSample()
+            var largestStep = Float.zero
+
+            for _ in 0..<250_000 {
+                let sample = generator.nextSample()
+                largestStep = max(largestStep, abs(sample - previous))
+                previous = sample
+            }
+
+            #expect(largestStep < 0.18, "\(kind.displayName) produced an abrupt sample step of \(largestStep)")
+        }
+    }
 }
 
 @MainActor

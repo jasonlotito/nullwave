@@ -4,7 +4,21 @@ import AVFoundation
 final class NoiseGenerator: @unchecked Sendable {
     private let kind: NoiseKind
     private let sampleRate: Double
+    private let darkFirstAlpha: Float
+    private let darkSecondAlpha: Float
+    private let grayLowAlpha: Float
+    private let grayMidAlpha: Float
+    private let deepLowAlpha: Float
+    private let deepLowerAlpha: Float
+    private let fanBodyAlpha: Float
+    private let fanLowAlpha: Float
+    private let cabinAirAlpha: Float
+    private let cabinRumbleAlpha: Float
+    private let oceanBodyAlpha: Float
+    private let oceanLowerAlpha: Float
+    private let startupGainStep: Float
     private var randomState: UInt64 = 0x4d595df4d0f33173
+    private var startupGain = Float.zero
 
     private var brown = Float.zero
     private var darkLow = Float.zero
@@ -32,6 +46,19 @@ final class NoiseGenerator: @unchecked Sendable {
     init(kind: NoiseKind, sampleRate: Double) {
         self.kind = kind
         self.sampleRate = sampleRate
+        darkFirstAlpha = Self.lowPassAlpha(cutoff: 180, sampleRate: sampleRate)
+        darkSecondAlpha = Self.lowPassAlpha(cutoff: 65, sampleRate: sampleRate)
+        grayLowAlpha = Self.lowPassAlpha(cutoff: 120, sampleRate: sampleRate)
+        grayMidAlpha = Self.lowPassAlpha(cutoff: 2_000, sampleRate: sampleRate)
+        deepLowAlpha = Self.lowPassAlpha(cutoff: 85, sampleRate: sampleRate)
+        deepLowerAlpha = Self.lowPassAlpha(cutoff: 28, sampleRate: sampleRate)
+        fanBodyAlpha = Self.lowPassAlpha(cutoff: 1_500, sampleRate: sampleRate)
+        fanLowAlpha = Self.lowPassAlpha(cutoff: 100, sampleRate: sampleRate)
+        cabinAirAlpha = Self.lowPassAlpha(cutoff: 900, sampleRate: sampleRate)
+        cabinRumbleAlpha = Self.lowPassAlpha(cutoff: 75, sampleRate: sampleRate)
+        oceanBodyAlpha = Self.lowPassAlpha(cutoff: 420, sampleRate: sampleRate)
+        oceanLowerAlpha = Self.lowPassAlpha(cutoff: 95, sampleRate: sampleRate)
+        startupGainStep = Float(1 / max(sampleRate * 0.02, 1))
     }
 
     /// Constructs the Core Audio callback outside the main-actor-isolated
@@ -57,6 +84,13 @@ final class NoiseGenerator: @unchecked Sendable {
     }
 
     func nextSample() -> Float {
+        let sample = generateSample()
+        guard startupGain < 1 else { return sample }
+        startupGain = min(startupGain + startupGainStep, 1)
+        return sample * startupGain
+    }
+
+    private func generateSample() -> Float {
         let white = nextWhite()
         switch kind {
         case .white:
@@ -74,16 +108,14 @@ final class NoiseGenerator: @unchecked Sendable {
             // Two low-pass stages make a soft, very bass-heavy "dark" noise.
             // Coefficients are derived from cutoff frequencies so the sound stays
             // consistent when the output device's sample rate changes.
-            let firstAlpha = lowPassAlpha(cutoff: 180)
-            let secondAlpha = lowPassAlpha(cutoff: 65)
-            darkLow += firstAlpha * (white - darkLow)
-            darkLower += secondAlpha * (darkLow - darkLower)
-            return (darkLow * 0.30 + darkLower * 1.8).clamped(to: -0.65...0.65)
+            darkLow += darkFirstAlpha * (white - darkLow)
+            darkLower += darkSecondAlpha * (darkLow - darkLower)
+            return (darkLow * 0.30 + darkLower * 1.8).softLimited(to: 0.65)
         case .gray:
-            grayLow += lowPassAlpha(cutoff: 120) * (white - grayLow)
-            grayMid += lowPassAlpha(cutoff: 2_000) * (white - grayMid)
+            grayLow += grayLowAlpha * (white - grayLow)
+            grayMid += grayMidAlpha * (white - grayMid)
             let high = white - grayMid
-            return (white * 0.08 + grayLow * 0.60 + high * 0.20).clamped(to: -0.65...0.65)
+            return (white * 0.08 + grayLow * 0.60 + high * 0.20).softLimited(to: 0.65)
         case .blue:
             let sample = (white - previousWhite) * 0.18
             previousWhite = white
@@ -94,26 +126,26 @@ final class NoiseGenerator: @unchecked Sendable {
             previousWhite = white
             return sample.clamped(to: -0.65...0.65)
         case .deep:
-            deepLow += lowPassAlpha(cutoff: 85) * (white - deepLow)
-            deepLower += lowPassAlpha(cutoff: 28) * (deepLow - deepLower)
-            return (deepLow * 0.18 + deepLower * 2.2).clamped(to: -0.62...0.62)
+            deepLow += deepLowAlpha * (white - deepLow)
+            deepLower += deepLowerAlpha * (deepLow - deepLower)
+            return (deepLow * 0.18 + deepLower * 2.2).softLimited(to: 0.62)
         case .fan:
-            fanBody += lowPassAlpha(cutoff: 1_500) * (white - fanBody)
-            fanLow += lowPassAlpha(cutoff: 100) * (fanBody - fanLow)
+            fanBody += fanBodyAlpha * (white - fanBody)
+            fanLow += fanLowAlpha * (fanBody - fanLow)
             let hum = nextTone(frequency: 58) * 0.035 + Float(sin(tonePhase * 2)) * 0.012
-            return ((fanBody - fanLow) * 0.34 + fanLow * 0.12 + hum).clamped(to: -0.65...0.65)
+            return ((fanBody - fanLow) * 0.34 + fanLow * 0.12 + hum).softLimited(to: 0.65)
         case .cabin:
-            cabinAir += lowPassAlpha(cutoff: 900) * (white - cabinAir)
-            cabinRumble += lowPassAlpha(cutoff: 75) * (cabinAir - cabinRumble)
+            cabinAir += cabinAirAlpha * (white - cabinAir)
+            cabinRumble += cabinRumbleAlpha * (cabinAir - cabinRumble)
             let drone = nextTone(frequency: 43) * 0.045
-            return (cabinAir * 0.18 + cabinRumble * 0.75 + drone).clamped(to: -0.65...0.65)
+            return (cabinAir * 0.18 + cabinRumble * 0.75 + drone).softLimited(to: 0.65)
         case .ocean:
-            oceanBody += lowPassAlpha(cutoff: 420) * (white - oceanBody)
-            oceanLower += lowPassAlpha(cutoff: 95) * (oceanBody - oceanLower)
+            oceanBody += oceanBodyAlpha * (white - oceanBody)
+            oceanLower += oceanLowerAlpha * (oceanBody - oceanLower)
             swellPhase += 2 * Double.pi * 0.075 / sampleRate
             if swellPhase >= 2 * Double.pi { swellPhase -= 2 * Double.pi }
             let swell = Float(0.32 + 0.68 * ((sin(swellPhase) + 1) * 0.5))
-            return ((oceanBody * 0.35 + oceanLower * 1.1) * swell).clamped(to: -0.65...0.65)
+            return ((oceanBody * 0.35 + oceanLower * 1.1) * swell).softLimited(to: 0.65)
         }
     }
 
@@ -132,7 +164,7 @@ final class NoiseGenerator: @unchecked Sendable {
         return normalized * 2 - 1
     }
 
-    private func lowPassAlpha(cutoff: Double) -> Float {
+    private static func lowPassAlpha(cutoff: Double, sampleRate: Double) -> Float {
         Float(1 - exp(-2 * Double.pi * cutoff / sampleRate))
     }
 }
@@ -140,5 +172,17 @@ final class NoiseGenerator: @unchecked Sendable {
 private extension Float {
     func clamped(to range: ClosedRange<Float>) -> Float {
         min(max(self, range.lowerBound), range.upperBound)
+    }
+
+    /// Preserves small signals while rounding off peaks instead of introducing
+    /// a hard corner that can sound like a faint click.
+    func softLimited(to limit: Float, kneeRatio: Float = 0.8) -> Float {
+        let magnitude = abs(self)
+        let knee = limit * kneeRatio
+        guard magnitude > knee else { return self }
+        let headroom = limit - knee
+        let excess = magnitude - knee
+        let softened = knee + excess / (1 + excess / headroom)
+        return self.sign == .minus ? -softened : softened
     }
 }
