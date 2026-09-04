@@ -226,41 +226,42 @@ private struct SoundLibraryView: View {
 
     var body: some View {
         NavigationStack {
-            List(NoiseKind.allCases) { kind in
-                NavigationLink {
-                    SoundDetailView(audio: audio, kind: kind)
-                } label: {
-                    HStack(spacing: 14) {
-                        Image(systemName: kind.symbolName)
-                            .font(.title3)
-                            .foregroundStyle(Color.nullwavePurpleBright)
-                            .frame(width: 34)
-                            .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(kind.displayName)
-                                .font(.headline)
-                            Text(kind.spectrum)
-                                .font(.caption)
-                                .foregroundStyle(Color.nullwaveMuted)
+            VStack(spacing: 0) {
+                NullwaveScreenHeader(title: "Sounds")
+
+                List(NoiseKind.allCases) { kind in
+                    NavigationLink {
+                        SoundDetailView(audio: audio, kind: kind)
+                    } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: kind.symbolName)
+                                .font(.title3)
+                                .foregroundStyle(Color.nullwavePurpleBright)
+                                .frame(width: 34)
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(kind.displayName)
+                                    .font(.headline)
+                                Text(kind.spectrum)
+                                    .font(.caption)
+                                    .foregroundStyle(Color.nullwaveMuted)
+                            }
+                            Spacer()
+                            if audio.kind == kind {
+                                Image(systemName: audio.isPlaying ? "waveform" : "checkmark")
+                                    .foregroundStyle(Color.nullwaveBlue)
+                                    .accessibilityLabel(audio.isPlaying ? "Currently playing" : "Current sound")
+                            }
                         }
-                        Spacer()
-                        if audio.kind == kind {
-                            Image(systemName: audio.isPlaying ? "waveform" : "checkmark")
-                                .foregroundStyle(Color.nullwaveBlue)
-                                .accessibilityLabel(audio.isPlaying ? "Currently playing" : "Current sound")
-                        }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
+                    .listRowBackground(Color.nullwavePanel.opacity(0.88))
                 }
-                .listRowBackground(Color.nullwavePanel.opacity(0.88))
+                .scrollContentBackground(.hidden)
+                .scrollBounceBehavior(.basedOnSize)
             }
-            .scrollContentBackground(.hidden)
             .background(NullwaveBackground())
-            .navigationTitle("Sounds")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.nullwaveBackground.opacity(0.94), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 }
@@ -282,6 +283,7 @@ private struct SoundDetailView: View {
         .background(NullwaveBackground())
         .navigationTitle(kind.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbarBackground(Color.nullwaveBackground.opacity(0.94), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
@@ -417,7 +419,9 @@ private struct IOSSettingsView: View {
     @ObservedObject var audio: NoiseAudioController
 
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            NullwaveScreenHeader(title: "Settings")
+
             Form {
                 Section("Playback") {
                     LabeledContent("Mix with other apps", value: "Always on")
@@ -483,13 +487,44 @@ private struct IOSSettingsView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(NullwaveBackground())
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.nullwaveBackground.opacity(0.94), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .scrollBounceBehavior(.basedOnSize)
         }
+        .background(NullwaveBackground())
+    }
+}
+
+private struct NullwaveScreenHeader: View {
+    let title: String
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.white, .nullwavePurpleBright],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            Spacer()
+        }
+        .padding(.horizontal, 22)
+        .padding(.top, 10)
+        .padding(.bottom, 14)
+        .background {
+            LinearGradient(
+                colors: [Color.nullwavePurple.opacity(0.20), Color.nullwaveBackground.opacity(0.96)],
+                startPoint: .topTrailing,
+                endPoint: .bottomLeading
+            )
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.nullwaveLine)
+                .frame(height: 1)
+        }
+        .accessibilityAddTraits(.isHeader)
     }
 }
 
